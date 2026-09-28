@@ -12,8 +12,6 @@ interface TopNavBarProps {
 export function TopNavBar({ showAdult = true }: TopNavBarProps) {
   const router = useRouter();
   const profile = useStore((s) => s.profile);
-  const toggleDemoMode = useStore((s) => s.toggleDemoMode);
-
   const soundEnabled = useStore((s) => s.soundEnabled);
   const toggleSound = useStore((s) => s.toggleSound);
 
@@ -26,11 +24,6 @@ export function TopNavBar({ showAdult = true }: TopNavBarProps) {
   const handleSoundToggle = () => {
     playClickSound();
     toggleSound();
-  };
-
-  const handleDemoToggle = () => {
-    playClickSound();
-    toggleDemoMode();
   };
 
   const handleAdultPress = () => {
@@ -74,14 +67,13 @@ export function TopNavBar({ showAdult = true }: TopNavBarProps) {
         <Text style={styles.icon}>{soundEnabled ? "🔊" : "🔇"}</Text>
       </Pressable>
 
-      {/* Demo Mode Toggle */}
-      <Pressable
-        style={[styles.badge, profile.demoMode ? styles.demoActive : styles.demoInactive]}
-        onPress={handleDemoToggle}
-      >
-        <Text style={styles.icon}>🧪</Text>
-        <Text style={styles.demoText}>{profile.demoMode ? "ДЕМО" : "Обычн"}</Text>
-      </Pressable>
+      {/* Demo Mode Indicator (shown only if active from Adult settings) */}
+      {profile.demoMode && (
+        <View style={[styles.badge, styles.demoActive]}>
+          <Text style={styles.icon}>🧪</Text>
+          <Text style={styles.demoText}>ДЕМО</Text>
+        </View>
+      )}
 
       {/* Help / Terms & 3 Rules (ТЗ 2.5.1) */}
       <Pressable

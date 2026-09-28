@@ -28,7 +28,6 @@ export default function Progress() {
   const finishPeriod = useStore((s) => s.finishPeriod);
   const startNextPeriod = useStore((s) => s.startNextPeriod);
   const petPetInteractive = useStore((s) => s.petPetInteractive);
-  const feedSnackInteractive = useStore((s) => s.feedSnackInteractive);
 
   const [showNightModal, setShowNightModal] = useState(false);
   const [petMessage, setPetMessage] = useState<string | null>(null);
@@ -37,6 +36,8 @@ export default function Progress() {
   const [showDiaryModal, setShowDiaryModal] = useState(false);
 
   if (!profile) return null;
+
+  const isHungry = profile.pet.state.satiety < 50;
 
   const period = currentPeriod(profile);
   const completedPeriodsCount = Object.values(profile.periods).filter((p) => p.completed).length;
@@ -61,16 +62,6 @@ export default function Progress() {
     setTimeout(() => {
       setHeartCount((prev) => prev.slice(1));
     }, 1500);
-  };
-
-  const handleFeedApple = () => {
-    const res = feedSnackInteractive("apple");
-    setPetMessage(res.message);
-    setCurrent3DAnim(profile.pet.state.mood < 40 ? "Sad_To_Normal" : "Happy_Success");
-    setTimeout(() => {
-      setPetMessage(null);
-      setCurrent3DAnim(undefined);
-    }, 3500);
   };
 
   const handleBedtimePress = () => {
@@ -208,41 +199,33 @@ export default function Progress() {
           {/* Floating Care Action Tray */}
           <View style={styles.actionTray}>
             <Pressable
-              style={styles.actionBtn}
-              onPress={handleFeedApple}
-              accessibilityRole="button"
-            >
-              <Text style={styles.actionBtnIcon}>🍎</Text>
-              <View>
-                <Text style={styles.actionBtnTitle}>Яблочко</Text>
-                <Text style={styles.actionBtnSub}>+10 сытости</Text>
-              </View>
-            </Pressable>
-
-            <Pressable
               style={[styles.actionBtn, styles.actionBtnLove]}
               onPress={handlePetTouch}
               accessibilityRole="button"
+              accessibilityLabel="Погладить питомца"
             >
               <Text style={styles.actionBtnIcon}>💖</Text>
               <View>
                 <Text style={styles.actionBtnTitle}>Погладить</Text>
-                <Text style={styles.actionBtnSub}>+3 радости</Text>
+                <Text style={styles.actionBtnSub}>Ласка и забота</Text>
               </View>
             </Pressable>
 
             <Pressable
-              style={styles.actionBtn}
+              style={[styles.actionBtn, isHungry && styles.actionBtnHungry]}
               onPress={() => {
                 playClickSound();
                 router.push("/shop");
               }}
               accessibilityRole="button"
+              accessibilityLabel="Покормить питомца в лавке"
             >
-              <Text style={styles.actionBtnIcon}>🛒</Text>
+              <Text style={styles.actionBtnIcon}>🥣</Text>
               <View>
-                <Text style={styles.actionBtnTitle}>В лавку</Text>
-                <Text style={styles.actionBtnSub}>Обед и уют</Text>
+                <Text style={styles.actionBtnTitle}>В лавку за едой</Text>
+                <Text style={[styles.actionBtnSub, isHungry && styles.actionBtnSubHungry]}>
+                  {isHungry ? "Пора кушать! 🥣" : "Обед и вкусняшки"}
+                </Text>
               </View>
             </Pressable>
           </View>
@@ -710,6 +693,14 @@ const styles = StyleSheet.create({
   actionBtnLove: {
     backgroundColor: "#FFF5F7",
     borderColor: "#F3C5D0",
+  },
+  actionBtnHungry: {
+    backgroundColor: "#FFFBEB",
+    borderColor: "#FCD34D",
+  },
+  actionBtnSubHungry: {
+    color: "#D97706",
+    fontWeight: "700",
   },
   actionBtnIcon: {
     fontSize: 20,
