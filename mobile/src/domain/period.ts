@@ -35,16 +35,28 @@ export function computeNextIncome(profile: Profile): number {
   return base + (onTrack ? 10 : 0);
 }
 
-export function canFinishPeriod(profile: Profile): { ok: boolean; reason?: string } {
+export function canFinishPeriod(profile: Profile): {
+  ok: boolean;
+  reason?: string;
+  missingAction?: "budget" | "shop";
+} {
   const period = currentPeriod(profile);
   if (!period) return { ok: false, reason: "Нет активного периода." };
   if (profile.demoMode) return { ok: true };
   if (!period.planConfirmed) {
-    return { ok: false, reason: "Сначала составь и подтверди план бюджета." };
+    return {
+      ok: false,
+      reason: "Сначала разложи монетки по 3 конвертам и подтверди план бюджета на день! ✉️",
+      missingAction: "budget",
+    };
   }
   const hasMandatory = period.expenses.some((e) => e.type === "mandatory");
   if (!hasMandatory) {
-    return { ok: false, reason: "Соверши хотя бы одну обязательную покупку." };
+    return {
+      ok: false,
+      reason: "Питомец ещё не пообедал! Купи полезную еду в Лавке из конверта «Надо», чтобы он не ложился спать голодным 🥣",
+      missingAction: "shop",
+    };
   }
   return { ok: true };
 }

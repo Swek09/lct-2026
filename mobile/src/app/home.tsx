@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { AchievementsModal } from "../components/AchievementsModal";
+import { BedtimeCheckModal } from "../components/BedtimeCheckModal";
 import { BottomTabBar } from "../components/BottomTabBar";
 import { DailyBonusModal } from "../components/DailyBonusModal";
 import { DailyQuestModal } from "../components/DailyQuestModal";
@@ -37,6 +38,11 @@ export default function Home() {
   const [showDailyBonus, setShowDailyBonus] = useState(false);
   const [showDailyQuest, setShowDailyQuest] = useState(false);
   const [showNightModal, setShowNightModal] = useState(false);
+  const [bedtimeBlock, setBedtimeBlock] = useState<{
+    reason: string;
+    action?: "budget" | "shop";
+  } | null>(null);
+  const [homeToast, setHomeToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile && canClaimDailyBonus(profile)) {
@@ -67,6 +73,15 @@ export default function Home() {
 
   const claimChest = (unitId: number) => {
     if (chestClaimed[unitId]) return;
+    const uTasks = tasks.filter((t) => t.unitId === unitId);
+    const isDone = uTasks.length > 0 && uTasks.every((t) => completedTaskIds.has(t.id));
+    if (!isDone && !profile.demoMode) {
+      const remaining = uTasks.filter((t) => !completedTaskIds.has(t.id)).length;
+      playClickSound();
+      setHomeToast(`Пройди ещё ${remaining} урок(а) в этом мире, чтобы открыть сундук сокровищ! 🎁⭐`);
+      setTimeout(() => setHomeToast(null), 3500);
+      return;
+    }
     playCoinSound();
     setChestClaimed((prev) => ({ ...prev, [unitId]: true }));
     useStore.setState((state) => {
@@ -80,13 +95,18 @@ export default function Home() {
         lastFeedback: ["Ты открыл сундук мудрости и получил 25 монет! 🎁🪙"],
       };
     });
+    setHomeToast("Ура! Ты открыл сундук мудрости: +25 🪙 в кошелёк! 🎉");
+    setTimeout(() => setHomeToast(null), 3500);
   };
 
   const handleFinishPeriod = () => {
     playClickSound();
     const check = canFinishPeriod(profile);
     if (!check.ok) {
-      alert(check.reason ?? "Сначала подтверди план и накорми питомца перед сном!");
+      setBedtimeBlock({
+        reason: check.reason ?? "Сначала подтверди план и накорми питомца перед сном!",
+        action: check.missingAction,
+      });
       return;
     }
     setShowNightModal(true);
@@ -291,8 +311,11 @@ export default function Home() {
 
             {unitTasks.map((task, idx) => {
               const isDone = completedTaskIds.has(task.id);
+              const prevUnitTasks = activeUnit.id > 1 ? tasks.filter((t) => t.unitId === activeUnit.id - 1) : [];
+              const isPrevUnitDone = prevUnitTasks.length === 0 || prevUnitTasks.every((t) => completedTaskIds.has(t.id));
               const isUnlocked =
-                idx === 0 || completedTaskIds.has(unitTasks[idx - 1].id) || profile.demoMode;
+                profile.demoMode ||
+                (isPrevUnitDone && (idx === 0 || completedTaskIds.has(unitTasks[idx - 1].id)));
               const isNext = isUnlocked && !isDone && idx === nextTaskIndex;
 
               const xOffset = windOffsets[idx % windOffsets.length];
@@ -342,30 +365,48 @@ export default function Home() {
             })}
 
             {/* Unit treasure chest */}
-            <View style={styles.chestWrap}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Открыть сундук с сокровищами"
-                style={({ pressed }) => [
-                  styles.chestCircle,
-                  chestClaimed[activeUnit.id] && styles.chestClaimed,
-                  pressed && styles.nodePressed,
-                ]}
-                onPress={() => claimChest(activeUnit.id)}
-              >
-                <Text style={styles.chestIcon}>
-                  {chestClaimed[activeUnit.id] ? "✨" : "🎁"}
-                </Text>
-              </Pressable>
-              <Text style={styles.chestLabel}>
-                {chestClaimed[activeUnit.id] ? "Сундук открыт!" : "Сундук с сокровищами"}
-              </Text>
-              {!chestClaimed[activeUnit.id] && (
-                <View style={styles.chestRewardPill}>
-                  <Text style={styles.chestRewardText}>+25 🪙</Text>
+            {(() => {
+              const isUnitCompleted = unitTasks.length > 0 && unitTasks.every((t) => completedTaskIds.has(t.id));
+              const isClaimed = !!chestClaimed[activeUnit.id];
+              return (
+                <View style={styles.chestWrap}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Открыть сундук с сокровищами"
+                    style={({ pressed }) => [
+                      styles.chestCircle,
+                      isClaimed && styles.chestClaimed,
+                      !isClaimed && !isUnitCompleted && !profile.demoMode && styles.chestLocked,
+                      pressed && styles.nodePressed,
+                    ]}
+                    onPress={() => claimChest(activeUnit.id)}
+                  >
+                    <Text style={styles.chestIcon}>
+                      {isClaimed ? "✨" : isUnitCompleted || profile.demoMode ? "🎁" : "🔒"}
+                    </Text>
+                  </Pressable>
+                  <Text style={styles.chestLabel}>
+                    {isClaimed
+                      ? "Сундук мудрости открыт! ✨"
+                      : isUnitCompleted || profile.demoMode
+                      ? "Забери награду за Мир! 🎁"
+                      : `Пройди все уроки (${doneInUnit}/${unitTasks.length})`}
+                  </Text>
+                  {!isClaimed && (
+                    <View
+                      style={[
+                        styles.chestRewardPill,
+                        !isUnitCompleted && !profile.demoMode && styles.chestRewardPillLocked,
+                      ]}
+                    >
+                      <Text style={styles.chestRewardText}>
+                        {isUnitCompleted || profile.demoMode ? "+25 🪙 Открыть!" : "+25 🪙"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
+              );
+            })()}
           </View>
 
           {/* Coach owl tip */}
@@ -535,6 +576,20 @@ export default function Home() {
         }}
         onCancel={() => setShowNightModal(false)}
       />
+
+      <BedtimeCheckModal
+        visible={!!bedtimeBlock}
+        reason={bedtimeBlock?.reason ?? ""}
+        action={bedtimeBlock?.action}
+        onClose={() => setBedtimeBlock(null)}
+        onNavigate={(route) => router.push(route)}
+      />
+
+      {homeToast && (
+        <View style={styles.floatingToast} pointerEvents="none">
+          <Text style={styles.floatingToastText}>{homeToast}</Text>
+        </View>
+      )}
 
       <BottomTabBar currentTab="home" />
     </SafeAreaView>
@@ -991,6 +1046,11 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     borderBottomColor: colors.primaryDark,
   },
+  chestLocked: {
+    backgroundColor: "#E2E8F0",
+    borderColor: "#CBD5E1",
+    borderBottomColor: "#94A3B8",
+  },
   chestIcon: {
     fontSize: 38,
   },
@@ -1009,10 +1069,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 3,
   },
+  chestRewardPillLocked: {
+    backgroundColor: "#F1F5F9",
+    borderColor: "#CBD5E1",
+  },
   chestRewardText: {
     fontSize: 11,
     fontWeight: "900",
     color: "#A16207",
+  },
+  floatingToast: {
+    position: "absolute",
+    bottom: 84,
+    left: 20,
+    right: 20,
+    backgroundColor: "rgba(15, 23, 42, 0.94)",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 999,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  floatingToastText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
   },
 
   /* ---------- Coach owl ---------- */

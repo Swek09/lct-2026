@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { BedtimeCheckModal } from "../components/BedtimeCheckModal";
 import { BottomTabBar } from "../components/BottomTabBar";
 import { Cat3DViewer, CatAnimationName } from "../components/Cat3DViewer";
 import { DuoButton } from "../components/DuoButton";
@@ -34,6 +35,10 @@ export default function Progress() {
   const [heartCount, setHeartCount] = useState<number[]>([]);
   const [current3DAnim, setCurrent3DAnim] = useState<CatAnimationName | undefined>(undefined);
   const [showDiaryModal, setShowDiaryModal] = useState(false);
+  const [bedtimeBlock, setBedtimeBlock] = useState<{
+    reason: string;
+    action?: "budget" | "shop";
+  } | null>(null);
 
   if (!profile) return null;
 
@@ -68,7 +73,10 @@ export default function Progress() {
     playClickSound();
     const check = canFinishPeriod(profile);
     if (!check.ok) {
-      alert(check.reason ?? "Сначала подтверди план и накорми питомца перед сном!");
+      setBedtimeBlock({
+        reason: check.reason ?? "Сначала подтверди план и накорми питомца перед сном!",
+        action: check.missingAction,
+      });
       return;
     }
     setShowNightModal(true);
@@ -468,6 +476,14 @@ export default function Progress() {
           setShowNightModal(false);
         }}
         onCancel={() => setShowNightModal(false)}
+      />
+
+      <BedtimeCheckModal
+        visible={!!bedtimeBlock}
+        reason={bedtimeBlock?.reason ?? ""}
+        action={bedtimeBlock?.action}
+        onClose={() => setBedtimeBlock(null)}
+        onNavigate={(route) => router.push(route)}
       />
 
       <BottomTabBar currentTab="progress" />
