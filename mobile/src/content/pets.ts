@@ -38,15 +38,6 @@ export interface PetAccessory {
   image?: any;
 }
 
-// Clean assets - NO AI slop!
-export const finniAssets = {
-  owlStep1: null,
-  owlStep2: null,
-  owlStep3: null,
-  previewRug: null,
-  heroRoom: null,
-};
-
 export const petSpecies: PetSpecies[] = [
   {
     id: "cat",

@@ -18,6 +18,7 @@ import {
   applyImpact,
   clamp,
   computeGrowthStage,
+  countSuccessfulPeriods,
   createPet,
   explainStageChange,
 } from "../src/domain/pet";
@@ -65,20 +66,53 @@ test("Pet: clamp and applyImpact maintain 0..100 bounds", () => {
 });
 
 test("Pet: Growth stages progress through Baby, Teen, and Adult (ТЗ 2.5.10)", () => {
-  // Period 0: Initial baby stage
+  // Initial baby stage
   const stage0 = computeGrowthStage(0);
   assert.strictEqual(stage0.stage, "baby");
 
-  // Period 2: Teen stage
+  // 2 successful periods: Teen stage
   const stage2 = computeGrowthStage(2);
   assert.strictEqual(stage2.stage, "teen");
 
-  // Period 4+: Adult stage reached within 5 periods
+  // 4 successful periods: Adult stage reached within 5 periods
   const stage4 = computeGrowthStage(4);
   assert.strictEqual(stage4.stage, "adult");
 
   const msg = explainStageChange("teen", "adult");
   assert.ok(msg.length > 0);
+});
+
+test("Pet: countSuccessfulPeriods counts only onTrack completed periods (ТЗ 2.5.10)", () => {
+  const mkPeriods = (overspendOptional: boolean) => {
+    const period = createPeriod(0, 100);
+    period.completed = true;
+    period.plan = { mandatory: 40, optional: 30, savings: 20 };
+    period.planConfirmed = true;
+    period.expenses.push({
+      id: "e1",
+      itemId: "food_bowl",
+      type: "mandatory",
+      amount: 40,
+      timestamp: Date.now(),
+      impact: { mood: 0, satiety: 30 },
+    });
+    period.expenses.push({
+      id: "e2",
+      itemId: overspendOptional ? "toy_house" : "ball",
+      type: "optional",
+      amount: overspendOptional ? 70 : 25,
+      timestamp: Date.now(),
+      impact: overspendOptional ? { mood: 35, satiety: 0 } : { mood: 20, satiety: 0 },
+    });
+    period.savingsAdded = 20;
+    return { periods: { 0: period } };
+  };
+
+  // On-track period counts towards growth
+  assert.strictEqual(countSuccessfulPeriods(mkPeriods(false) as never), 1);
+
+  // Overspending beyond plan (+10%) does not count: safe error, no growth
+  assert.strictEqual(countSuccessfulPeriods(mkPeriods(true) as never), 0);
 });
 
 test("Period: canFinishPeriod verifies plan and mandatory spend, respects demoMode (ТЗ 2.5.13)", () => {

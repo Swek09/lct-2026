@@ -7,6 +7,7 @@ import type {
   Pet,
   PetState,
 } from "./types";
+import { planWasOnTrack } from "./economy";
 
 export const growthStageOrder: GrowthStage[] = ["egg", "baby", "teen", "adult"];
 
@@ -21,6 +22,20 @@ export const STAGE_THRESHOLDS: Record<GrowthStage, number> = {
   teen: 2,
   adult: 4,
 };
+
+/**
+ * ТЗ 2.5.10: подсчёт успешных периодов из совокупности решений:
+ * обязательные расходы закрыты, траты не вышли за план, накопления пополнялись.
+ */
+export function countSuccessfulPeriods(profile: PeriodsSource): number {
+  return Object.values(profile.periods).filter(
+    (p) => p.completed && planWasOnTrack(p),
+  ).length;
+}
+
+interface PeriodsSource {
+  periods: Record<number, GamePeriod>;
+}
 
 
 export function applyImpact(state: PetState, impact: Impact): PetState {
@@ -45,7 +60,15 @@ export function createPet(
   };
 }
 
-export function computeGrowthStage(periodsCompleted: number): {
+/**
+ * ТЗ 2.5.10: развитие питомца зависит от совокупности решений за несколько
+ * игровых периодов. Считаем «очки роста»: период считается успешным, если
+ * обязательные расходы закрыты, фактические траты соответствуют плану и
+ * накопления пополнялись регулярно. Успешных периодов нужно 2 на стадию.
+ */
+export const SUCCESSFUL_PERIODS_PER_STAGE = 2;
+
+export function computeGrowthStage(successfulPeriods: number): {
   stage: GrowthStage;
   progress: number;
 } {
@@ -54,7 +77,7 @@ export function computeGrowthStage(periodsCompleted: number): {
   for (let i = 0; i < growthStageOrder.length; i++) {
     const current = growthStageOrder[i];
     const threshold = STAGE_THRESHOLDS[current];
-    if (periodsCompleted >= threshold) {
+    if (successfulPeriods >= threshold) {
       stage = current;
       nextIdx = i;
     }
@@ -68,7 +91,7 @@ export function computeGrowthStage(periodsCompleted: number): {
     nextThreshold == null
       ? 100
       : clamp(
-          Math.round(((periodsCompleted - currentThreshold) / (nextThreshold - currentThreshold)) * 100),
+          Math.round(((successfulPeriods - currentThreshold) / (nextThreshold - currentThreshold)) * 100),
         );
   return { stage, progress };
 }

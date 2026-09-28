@@ -377,7 +377,7 @@ export default function Progress() {
               <View style={styles.growthCard}>
                 <Text style={styles.growthCardTitle}>Как растёт твой питомец 🌱</Text>
                 <Text style={styles.growthCardDesc}>
-                  Питомец подрастает каждый новый день, если ты сытно кормишь его и откладываешь монетки!
+                  Питомец подрастает за успешный день: накорми друга, придерживайся плана и пополняй копилку!
                 </Text>
 
                 <View style={styles.stagesRow}>
@@ -409,7 +409,7 @@ export default function Progress() {
                   >
                     <Text style={styles.stageItemEmoji}>🐤</Text>
                     <Text style={styles.stageItemName}>Подросток</Text>
-                    <Text style={styles.stageItemRequirement}>2+ дня</Text>
+                    <Text style={styles.stageItemRequirement}>2 успешных дня</Text>
                   </View>
 
                   <View style={styles.stageArrow}>
@@ -424,7 +424,7 @@ export default function Progress() {
                   >
                     <Text style={styles.stageItemEmoji}>🐥</Text>
                     <Text style={styles.stageItemName}>Взрослый</Text>
-                    <Text style={styles.stageItemRequirement}>4+ дня</Text>
+                    <Text style={styles.stageItemRequirement}>4 успешных дня</Text>
                   </View>
                 </View>
               </View>

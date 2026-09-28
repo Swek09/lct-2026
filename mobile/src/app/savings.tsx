@@ -914,8 +914,9 @@ const styles = StyleSheet.create({
   stepperBtn: {
     backgroundColor: "#F3F4F6",
     borderRadius: radius.md,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 48,
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -923,7 +924,7 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   stepperBtnText: {
-    fontSize: fonts.caption,
+    fontSize: fonts.body,
     fontWeight: "800",
     color: colors.text,
   },
@@ -935,7 +936,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
     paddingHorizontal: 12,
-    height: 42,
+    height: 48,
   },
   withdrawTextInput: {
     fontSize: 20,
@@ -956,8 +957,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   withdrawChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minHeight: 40,
+    justifyContent: "center",
     borderRadius: radius.pill,
     backgroundColor: "#F3F4F6",
     borderWidth: 1,
@@ -968,7 +970,7 @@ const styles = StyleSheet.create({
     borderColor: "#F59E0B",
   },
   withdrawChipText: {
-    fontSize: fonts.caption,
+    fontSize: fonts.small,
     fontWeight: "700",
     color: colors.textMuted,
   },

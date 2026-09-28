@@ -298,15 +298,7 @@ export function Cat3DViewer({
             // Center model horizontally so rotation is around center
             const box = new THREE.Box3().setFromObject(sceneObj);
             const center = new THREE.Vector3();
-            const size = new THREE.Vector3();
             box.getCenter(center);
-            box.getSize(size);
-            console.log("🐱 [Cat3DViewer] MODEL STATS: " + JSON.stringify({
-              min: { x: box.min.x, y: box.min.y, z: box.min.z },
-              max: { x: box.max.x, y: box.max.y, z: box.max.z },
-              size: { x: size.x, y: size.y, z: size.z },
-              center: { x: center.x, y: center.y, z: center.z },
-            }));
             sceneObj.position.x = -center.x;
             sceneObj.position.y = modelY;
             sceneObj.position.z = -center.z;
@@ -367,8 +359,7 @@ export function Cat3DViewer({
             setLoaded(true);
           },
           undefined,
-          (err: any) => {
-            console.warn("Failed to load /models/cat.glb, falling back to 2D avatar:", err);
+          () => {
             if (isMounted) setLoadError(true);
           }
         );
@@ -390,8 +381,7 @@ export function Cat3DViewer({
         };
 
         animate();
-      } catch (err) {
-        console.warn("3D Engine init error:", err);
+      } catch {
         if (isMounted) setLoadError(true);
       }
     }

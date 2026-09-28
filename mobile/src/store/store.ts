@@ -14,6 +14,7 @@ import {
   applyImpact,
   clamp,
   computeGrowthStage,
+  countSuccessfulPeriods,
   createPet,
   defaultExpenseImpact,
   explainStageChange,
@@ -304,8 +305,13 @@ export const useStore = create<StoreState>()(
         } else {
           state = applyImpact(state, { mood: -6, satiety: -6 });
         }
-        const completedCount = Object.values(profile.periods).filter((p) => p.completed).length;
-        const { stage, progress } = computeGrowthStage(completedCount);
+        // ТЗ 2.5.10: стадия растёт от совокупности успешных решений за периоды,
+        // а не просто от числа завершённых дней.
+        const successCount = countSuccessfulPeriods({
+          ...profile,
+          periods: { ...profile.periods },
+        });
+        const { stage, progress } = computeGrowthStage(successCount);
         const prevStage = profile.pet.growthStage as GrowthStage;
         const newPet = {
           ...profile.pet,
@@ -321,7 +327,14 @@ export const useStore = create<StoreState>()(
           feedback.push("Факт разошёлся с планом. Попробуй точнее планировать в следующий раз.");
         }
         const stageMsg = explainStageChange(prevStage, stage);
-        if (stageMsg) feedback.push(stageMsg);
+        if (stageMsg) {
+          feedback.push(stageMsg);
+        } else if (!onTrack) {
+          // ТЗ 2.5.9: понятный путь восстановления после неудачного периода.
+          feedback.push(
+            "Чтобы Финни подрос, нужно закрывать конверт «Надо», придерживаться плана и пополнять копилку. В новом дне всё получится! 💪",
+          );
+        }
 
         const { nextIncome } = shiftToNextPeriod(profile);
         feedback.push(`Новый период начался. Доход: ${nextIncome} монет.`);

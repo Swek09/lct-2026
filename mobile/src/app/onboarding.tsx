@@ -73,10 +73,6 @@ export default function Onboarding() {
           ))}
         </View>
 
-        <Text style={styles.note}>
-          🔒 Без скучных паролей и регистраций — игра живёт только на твоём телефоне.
-        </Text>
-
         <Pressable
           style={styles.primaryButton}
           onPress={() => {

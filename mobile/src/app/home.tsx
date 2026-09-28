@@ -15,7 +15,6 @@ import { DailyBonusModal } from "../components/DailyBonusModal";
 import { DailyQuestModal } from "../components/DailyQuestModal";
 import { DuoButton } from "../components/DuoButton";
 import { NightTransitionModal } from "../components/NightTransitionModal";
-import { PetAvatar } from "../components/PetAvatar";
 import { TopNavBar } from "../components/TopNavBar";
 import { goals } from "../content/goals";
 import { tasks, taskUnits } from "../content/tasks";
@@ -94,6 +93,16 @@ export default function Home() {
     setShowNightModal(true);
   };
 
+  /* Derived data for the active unit */
+  const activeUnit = taskUnits.find((u) => u.id === activeUnitId) ?? taskUnits[0];
+  const unitTasks = tasks.filter((t) => t.unitId === activeUnit.id);
+  const doneInUnit = unitTasks.filter((t) => completedTaskIds.has(t.id)).length;
+  const progressPct = unitTasks.length > 0 ? (doneInUnit / unitTasks.length) * 100 : 0;
+  const nextTaskIndex = unitTasks.findIndex((t) => !completedTaskIds.has(t.id));
+
+  /* Authentic Duolingo winding rhythm: right → center → left */
+  const windOffsets = [0, 52, 52, 0, -52, -52];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <TopNavBar />
@@ -103,307 +112,396 @@ export default function Home() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Unit Selector Header (Duolingo Unit Banner) */}
-        <View style={styles.unitHeader}>
-          <View style={styles.unitSelectorRow}>
-            {taskUnits.map((u) => (
-              <Pressable
-                key={u.id}
-                style={[
-                  styles.unitTab,
-                  activeUnitId === u.id && styles.unitTabActive,
-                ]}
-                onPress={() => setActiveUnitId(u.id)}
-              >
-                <Text style={styles.unitTabBadge}>{u.badge}</Text>
-                <Text
-                  style={[
-                    styles.unitTabText,
-                    activeUnitId === u.id && styles.unitTabTextActive,
+        {/* ============ 1. UNIT HEADER ============ */}
+        <View style={styles.unitSection}>
+          {/* Segmented world switcher */}
+          <View style={styles.segmentWrap}>
+            {taskUnits.map((u) => {
+              const unitDone = tasks.filter(
+                (t) => t.unitId === u.id && completedTaskIds.has(t.id),
+              ).length;
+              const unitTotal = tasks.filter((t) => t.unitId === u.id).length;
+              const isActive = activeUnitId === u.id;
+              const isComplete = unitTotal > 0 && unitDone === unitTotal;
+              return (
+                <Pressable
+                  key={u.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Мир ${u.id}`}
+                  style={({ pressed }) => [
+                    styles.segment,
+                    isActive && styles.segmentActive,
+                    pressed && styles.segmentPressed,
                   ]}
+                  onPress={() => {
+                    playClickSound();
+                    setActiveUnitId(u.id);
+                  }}
                 >
-                  Мир {u.id}
-                </Text>
-              </Pressable>
-            ))}
+                  <Text style={styles.segmentBadge}>{isComplete ? "🏆" : u.badge}</Text>
+                  <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
+                    {u.id}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
-          {/* Active Unit Info Card */}
-          {(() => {
-            const currentUnit = taskUnits.find((u) => u.id === activeUnitId) ?? taskUnits[0];
-            const unitTasks = tasks.filter((t) => t.unitId === currentUnit.id);
-            const doneInUnit = unitTasks.filter((t) => completedTaskIds.has(t.id)).length;
-            const progressPct = unitTasks.length > 0 ? (doneInUnit / unitTasks.length) * 100 : 0;
-
-            return (
-              <View style={styles.unitBannerCard}>
-                <View style={styles.unitBannerTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.unitBannerTitle}>{currentUnit.title}</Text>
-                    <Text style={styles.unitBannerDesc}>{currentUnit.description}</Text>
-                    <View style={styles.petStatusRow}>
-                      <View style={styles.petStatusBadge}>
-                        <Text style={styles.petStatusText}>🥣 {profile.pet.state.satiety}% сытость</Text>
-                      </View>
-                      <View style={[styles.petStatusBadge, styles.petStatusBadgeMood]}>
-                        <Text style={styles.petStatusText}>😊 {profile.pet.state.mood}% радость</Text>
-                      </View>
-                    </View>
+          {/* Hero unit banner */}
+          <View style={styles.unitBanner}>
+            <View style={styles.unitBannerTopRow}>
+              <View style={styles.unitBannerTextCol}>
+                <View style={styles.unitChipRow}>
+                  <View style={styles.unitChip}>
+                    <Text style={styles.unitChipText}>Мир {activeUnit.id}</Text>
                   </View>
-                  <Pressable style={styles.unitPetPreview} onPress={handlePetTap}>
-                    <Image
-                      source={require("../../assets/images/background_cat.png")}
-                      style={styles.unitPetImage}
-                      resizeMode="contain"
-                    />
-                  </Pressable>
+                  <View style={[styles.unitChip, styles.unitChipDay]}>
+                    <Text style={[styles.unitChipText, styles.unitChipTextDay]}>
+                      День {profile.currentPeriodIndex + 1} ☀️
+                    </Text>
+                  </View>
                 </View>
+                <Text style={styles.unitTitle}>{activeUnit.title.replace(/^Остров \d+: /, "")}</Text>
+                <Text style={styles.unitDesc} numberOfLines={2}>
+                  {activeUnit.description}
+                </Text>
+              </View>
 
-                {/* Pet Speech Bubble on Tap */}
+              {/* Pet hero with speech bubble */}
+              <View style={styles.petHeroWrap}>
                 {petSpeech && (
-                  <View style={styles.petBubbleBox}>
+                  <View style={styles.petBubble}>
                     <Text style={styles.petBubbleText}>{petSpeech}</Text>
                   </View>
                 )}
-
-                {/* Unit Progress Bar */}
-                <View style={styles.unitProgressWrap}>
-                  <View style={styles.unitProgressBar}>
-                    <View style={[styles.unitProgressFill, { width: `${progressPct}%` }]} />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Погладить питомца"
+                  onPress={handlePetTap}
+                  style={({ pressed }) => [
+                    styles.petHeroCircle,
+                    pressed && styles.petHeroPressed,
+                  ]}
+                >
+                  <Image
+                    source={require("../../assets/images/background_cat.png")}
+                    style={styles.petHeroImage}
+                    resizeMode="contain"
+                  />
+                  <View style={styles.petHeroStatus}>
+                    <Text style={styles.petHeroStatusText}>
+                      🥣{profile.pet.state.satiety} 😊{profile.pet.state.mood}
+                    </Text>
                   </View>
-                  <Text style={styles.unitProgressText}>
-                    {doneInUnit} / {unitTasks.length} пройдено
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Unit progress */}
+            <View style={styles.unitProgressRow}>
+              <View style={styles.unitProgressBarTrack}>
+                <View style={[styles.unitProgressFill, { width: `${progressPct}%` }]} />
+                {progressPct > 12 && (
+                  <Text style={[styles.unitProgressPct, { left: `${Math.min(progressPct - 6, 82)}%` }]}>
+                    {Math.round(progressPct)}%
                   </Text>
-                </View>
+                )}
               </View>
-            );
-          })()}
-        </View>
-
-        {/* Goal & Medals Quick Widgets */}
-        <View style={styles.quickWidgetsRow}>
-          {(() => {
-            const allGoals = [...(profile.customGoals ?? []), ...goals];
-            const activeGoalId = profile.selectedGoalId ?? allGoals[0]?.id;
-            const activeGoal = allGoals.find((g) => g.id === activeGoalId) ?? allGoals[0];
-            const savedInGoal = profile.savingsByGoal[activeGoal.id] ?? 0;
-            return (
-              <Pressable
-                style={styles.goalWidgetCard}
-                onPress={() => {
-                  playClickSound();
-                  router.push("/savings");
-                }}
-              >
-                <View style={styles.goalWidgetLeft}>
-                  <Text style={{ fontSize: 24 }}>{activeGoal.icon}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.goalWidgetTitle} numberOfLines={1}>
-                      Цель: {activeGoal.name}
-                    </Text>
-                    <Text style={styles.goalWidgetSubtitle}>
-                      {savedInGoal} / {activeGoal.cost} 🪙
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            );
-          })()}
-
-          {/* Medals Quick Widget */}
-          <Pressable
-            style={styles.medalWidgetCard}
-            onPress={() => {
-              playClickSound();
-              setShowAchievements(true);
-            }}
-          >
-            <Text style={{ fontSize: 24 }}>🏅</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.medalWidgetTitle}>Награды</Text>
-              <Text style={styles.medalWidgetSubtitle}>
-                {profile.unlockedAchievementIds?.length ?? 0} из 8 наград
+              <Text style={styles.unitProgressLabel}>
+                {doneInUnit}/{unitTasks.length} уроков
               </Text>
             </View>
-          </Pressable>
+          </View>
         </View>
 
-        {/* Daily Gamification Hub (Подарок дня + Загадка Мудрой Совы) */}
-        <View style={styles.dailyHubRow}>
-          {/* Daily Gift Button */}
-          <Pressable
-            style={[
-              styles.dailyHubBtn,
-              canClaimDailyBonus(profile) && styles.dailyHubBtnActive,
-            ]}
-            onPress={() => {
-              playClickSound();
-              setShowDailyBonus(true);
-            }}
-          >
-            <Text style={{ fontSize: 22 }}>🎁</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.dailyHubTitle}>Подарок дня</Text>
-              <Text style={styles.dailyHubSubtitle}>
-                {canClaimDailyBonus(profile) ? "Забрать награду! ✨" : "Получено сегодня ✓"}
-              </Text>
-            </View>
-            {canClaimDailyBonus(profile) && (
-              <View style={styles.dailyBadgePill}>
-                <Text style={styles.dailyBadgeText}>ЖДЁТ!</Text>
+        {/* ============ 2. DAILY HUB ============ */}
+        <View style={styles.sectionPad}>
+          <Text style={styles.sectionTitle}>EVERY ДЕНЬ</Text>
+          <View style={styles.dailyRow}>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.dailyCard,
+                styles.dailyCardGift,
+                canClaimDailyBonus(profile) && styles.dailyCardGiftActive,
+                pressed && styles.cardPressed,
+              ]}
+              onPress={() => {
+                playClickSound();
+                setShowDailyBonus(true);
+              }}
+            >
+              <View style={styles.dailyIconTile}>
+                <Text style={styles.dailyIconText}>🎁</Text>
+                {canClaimDailyBonus(profile) && <View style={styles.dotBadge} />}
               </View>
-            )}
-          </Pressable>
+              <View style={styles.dailyTextCol}>
+                <Text style={styles.dailyTitle}>Подарок дня</Text>
+                <Text
+                  style={[
+                    styles.dailySubtitle,
+                    canClaimDailyBonus(profile) && styles.dailySubtitleHot,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {canClaimDailyBonus(profile) ? "Забрать награду! ✨" : "Получено сегодня ✓"}
+                </Text>
+              </View>
+            </Pressable>
 
-          {/* Daily Quest Button */}
-          <Pressable
-            style={[
-              styles.dailyHubBtn,
-              canDoDailyQuest(profile) && styles.dailyQuestBtnActive,
-            ]}
-            onPress={() => {
-              playClickSound();
-              setShowDailyQuest(true);
-            }}
-          >
-            <Text style={{ fontSize: 22 }}>🦉</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.dailyHubTitle}>Загадка Совы</Text>
-              <Text style={styles.dailyHubSubtitle}>
-                {canDoDailyQuest(profile) ? "+15 🪙 за ответ" : "Пройдено сегодня ✓"}
-              </Text>
-            </View>
-            {canDoDailyQuest(profile) && (
-              <View style={styles.questBadgePill}>
-                <Text style={styles.dailyBadgeText}>+15 🪙</Text>
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [
+                styles.dailyCard,
+                styles.dailyCardQuest,
+                canDoDailyQuest(profile) && styles.dailyCardQuestActive,
+                pressed && styles.cardPressed,
+              ]}
+              onPress={() => {
+                playClickSound();
+                setShowDailyQuest(true);
+              }}
+            >
+              <View style={styles.dailyIconTile}>
+                <Text style={styles.dailyIconText}>🦉</Text>
+                {canDoDailyQuest(profile) && <View style={styles.dotBadgeGreen} />}
               </View>
-            )}
-          </Pressable>
+              <View style={styles.dailyTextCol}>
+                <Text style={styles.dailyTitle}>Загадка Совы</Text>
+                <Text
+                  style={[
+                    styles.dailySubtitle,
+                    canDoDailyQuest(profile) && styles.dailySubtitleHotGreen,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {canDoDailyQuest(profile) ? "+15 🪙 за ответ" : "Пройдено сегодня ✓"}
+                </Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
 
-        {/* Adventure Path (Duolingo Learning Path) */}
-        <View style={styles.pathContainer}>
+        {/* ============ 3. ADVENTURE PATH ============ */}
+        <View style={styles.pathSection}>
+          <Text style={styles.sectionTitle}>ПУТЬ ПРИКЛЮЧЕНИЙ</Text>
 
-          {(() => {
-            const currentUnit = taskUnits.find((u) => u.id === activeUnitId) ?? taskUnits[0];
-            const unitTasks = tasks.filter((t) => t.unitId === currentUnit.id);
+          <View style={styles.pathWrapper}>
+            {/* Decorative dashed spine */}
+            <View style={styles.pathSpine} pointerEvents="none" />
 
-            return (
-              <View style={styles.nodesWrapper}>
-                {unitTasks.map((task, idx) => {
-                  const isDone = completedTaskIds.has(task.id);
-                  const isUnlocked = idx === 0 || completedTaskIds.has(unitTasks[idx - 1].id) || profile.demoMode;
+            {unitTasks.map((task, idx) => {
+              const isDone = completedTaskIds.has(task.id);
+              const isUnlocked =
+                idx === 0 || completedTaskIds.has(unitTasks[idx - 1].id) || profile.demoMode;
+              const isNext = isUnlocked && !isDone && idx === nextTaskIndex;
 
-                  // Winding offset for authentic Duolingo curve
-                  const offsets = [0, 38, -38, 20, -20];
-                  const xOffset = offsets[idx % offsets.length];
+              const xOffset = windOffsets[idx % windOffsets.length];
 
-                  return (
-                    <View
-                      key={task.id}
-                      style={[styles.nodeRow, { transform: [{ translateX: xOffset }] }]}
-                    >
-                      <Pressable
-                        disabled={!isUnlocked}
-                        style={({ pressed }) => [
-                          styles.nodeCircle,
-                          isDone && styles.nodeDone,
-                          !isDone && isUnlocked && styles.nodeCurrent,
-                          !isUnlocked && styles.nodeLocked,
-                          pressed && styles.nodePressed,
-                        ]}
-                        onPress={() => {
-                          playClickSound();
-                          router.push(`/task/${task.id}` as never);
-                        }}
-                      >
-                        <Text style={styles.nodeIcon}>
-                          {isDone ? "⭐" : isUnlocked ? (task.icon ?? "🪙") : "🔒"}
-                        </Text>
-                        {isUnlocked && !isDone && (
-                          <View style={styles.startBadge}>
-                            <Text style={styles.startBadgeText}>ИГРАТЬ</Text>
-                          </View>
-                        )}
-                      </Pressable>
-
-                      {/* Task title label below node */}
-                      <View style={styles.nodeLabelBox}>
-                        <Text style={styles.nodeLabelText} numberOfLines={1}>
-                          {task.title}
-                        </Text>
-                        <Text style={styles.nodeRewardText}>+{task.reward} 🪙</Text>
+              return (
+                <View
+                  key={task.id}
+                  style={[styles.nodeRow, { transform: [{ translateX: xOffset }] }]}
+                >
+                  <View style={styles.nodeCol}>
+                    {isNext && (
+                      <View style={styles.startBubble}>
+                        <Text style={styles.startBubbleText}>СТАРТ</Text>
                       </View>
-
-                      {/* Connector line between nodes */}
-                      {idx < unitTasks.length - 1 && <View style={styles.pathLine} />}
+                    )}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={task.title}
+                      disabled={!isUnlocked}
+                      style={({ pressed }) => [
+                        styles.nodeCircle,
+                        isDone && styles.nodeDone,
+                        isNext && styles.nodeCurrent,
+                        !isDone && !isUnlocked && styles.nodeLocked,
+                        pressed && isUnlocked && styles.nodePressed,
+                      ]}
+                      onPress={() => {
+                        playClickSound();
+                        router.push(`/task/${task.id}` as never);
+                      }}
+                    >
+                      <Text style={styles.nodeIcon}>
+                        {isDone ? "⭐" : isUnlocked ? (task.icon ?? "🪙") : "🔒"}
+                      </Text>
+                    </Pressable>
+                    <View style={styles.nodeLabelWrap}>
+                      <Text style={styles.nodeTitle} numberOfLines={2}>
+                        {task.title}
+                      </Text>
+                      <View style={styles.rewardPill}>
+                        <Text style={styles.rewardPillText}>+{task.reward} 🪙</Text>
+                      </View>
                     </View>
-                  );
-                })}
-
-                {/* Unit End Chest */}
-                <View style={styles.chestNodeRow}>
-                  <Pressable
-                    style={[
-                      styles.chestCircle,
-                      chestClaimed[currentUnit.id] && styles.chestClaimed,
-                    ]}
-                    onPress={() => claimChest(currentUnit.id)}
-                  >
-                    <Text style={{ fontSize: 32 }}>
-                      {chestClaimed[currentUnit.id] ? "✨" : "🎁"}
-                    </Text>
-                  </Pressable>
-                  <Text style={styles.chestLabel}>
-                    {chestClaimed[currentUnit.id]
-                      ? "Сундук открыт!"
-                      : "Сундук с сокровищами (+25 🪙)"}
-                  </Text>
+                  </View>
                 </View>
-              </View>
-            );
-          })()}
+              );
+            })}
 
-          {/* Coach Advice by the Road */}
-          <View style={styles.coachOwlSection}>
-            <View style={styles.coachOwlBadge}>
-              <Text style={styles.coachOwlEmoji}>🦉</Text>
+            {/* Unit treasure chest */}
+            <View style={styles.chestWrap}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Открыть сундук с сокровищами"
+                style={({ pressed }) => [
+                  styles.chestCircle,
+                  chestClaimed[activeUnit.id] && styles.chestClaimed,
+                  pressed && styles.nodePressed,
+                ]}
+                onPress={() => claimChest(activeUnit.id)}
+              >
+                <Text style={styles.chestIcon}>
+                  {chestClaimed[activeUnit.id] ? "✨" : "🎁"}
+                </Text>
+              </Pressable>
+              <Text style={styles.chestLabel}>
+                {chestClaimed[activeUnit.id] ? "Сундук открыт!" : "Сундук с сокровищами"}
+              </Text>
+              {!chestClaimed[activeUnit.id] && (
+                <View style={styles.chestRewardPill}>
+                  <Text style={styles.chestRewardText}>+25 🪙</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Coach owl tip */}
+          <View style={styles.coachRow}>
+            <View style={styles.coachAvatar}>
+              <Text style={styles.coachAvatarEmoji}>🦉</Text>
             </View>
             <View style={styles.coachBubble}>
               <Text style={styles.coachText}>
-                {profile.pet.name} ждёт приключений! Проходи весёлые уроки, зарабатывай монетки и вкусно корми друга! ✨
+                {profile.pet.name} ждёт приключений! Проходи весёлые уроки, зарабатывай монетки и
+                вкусно корми друга! ✨
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Feedback Alert if present */}
+        {/* ============ 4. GOAL & MEDALS ============ */}
+        <View style={styles.sectionPad}>
+          <Text style={styles.sectionTitle}>ТВОИ ДОСТИЖЕНИЯ</Text>
+          <View style={styles.widgetsRow}>
+            {(() => {
+              const allGoals = [...(profile.customGoals ?? []), ...goals];
+              const activeGoalId = profile.selectedGoalId ?? allGoals[0]?.id;
+              const activeGoal = allGoals.find((g) => g.id === activeGoalId) ?? allGoals[0];
+              const savedInGoal = profile.savingsByGoal[activeGoal.id] ?? 0;
+              const goalPct = Math.min(100, (savedInGoal / activeGoal.cost) * 100);
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.widgetCard, pressed && styles.cardPressed]}
+                  onPress={() => {
+                    playClickSound();
+                    router.push("/savings");
+                  }}
+                >
+                  <View style={[styles.widgetIconTile, styles.widgetIconTileSage]}>
+                    <Text style={styles.widgetIconText}>{activeGoal.icon}</Text>
+                  </View>
+                  <Text style={styles.widgetTitle} numberOfLines={1}>
+                    {activeGoal.name}
+                  </Text>
+                  <Text style={styles.widgetSubtitle}>
+                    {savedInGoal} / {activeGoal.cost} 🪙
+                  </Text>
+                  <View style={styles.widgetProgressTrack}>
+                    <View
+                      style={[styles.widgetProgressFill, { width: `${goalPct}%` }]}
+                    />
+                  </View>
+                </Pressable>
+              );
+            })()}
+
+            <Pressable
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.widgetCard, pressed && styles.cardPressed]}
+              onPress={() => {
+                playClickSound();
+                setShowAchievements(true);
+              }}
+            >
+              <View style={[styles.widgetIconTile, styles.widgetIconTileAmber]}>
+                <Text style={styles.widgetIconText}>🏅</Text>
+              </View>
+              <Text style={styles.widgetTitle}>Награды</Text>
+              <Text style={styles.widgetSubtitle}>
+                {profile.unlockedAchievementIds?.length ?? 0} из 8
+              </Text>
+              <View style={styles.widgetProgressTrack}>
+                <View
+                  style={[
+                    styles.widgetProgressFill,
+                    styles.widgetProgressFillAmber,
+                    {
+                      width: `${
+                        ((profile.unlockedAchievementIds?.length ?? 0) / 8) * 100
+                      }%`,
+                    },
+                  ]}
+                />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* ============ 5. OWL FEEDBACK ============ */}
         {lastFeedback.length > 0 && (
           <View style={styles.feedbackCard}>
-            <Text style={styles.feedbackTitle}>💡 Совет Мудрой Совы:</Text>
-            {lastFeedback.map((f, i) => (
-              <Text key={i} style={styles.feedbackItem}>
-                {f}
-              </Text>
-            ))}
+            <View style={styles.feedbackAccent} />
+            <View style={styles.feedbackBody}>
+              <Text style={styles.feedbackTitle}>💡 Совет Мудрой Совы</Text>
+              {lastFeedback.map((f, i) => (
+                <Text key={i} style={styles.feedbackItem}>
+                  {f}
+                </Text>
+              ))}
+            </View>
           </View>
         )}
 
-        {/* Period Actions Banner */}
-        {period && !period.completed && (
+        {/* ============ 5.5 HOW TO PLAY (ТЗ 2.5.1) ============ */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Как играть — открыть подсказку"
+          style={({ pressed }) => [styles.howToPlayBtn, pressed && styles.cardPressed]}
+          onPress={() => {
+            playClickSound();
+            router.push("/onboarding");
+          }}
+        >
+          <Text style={styles.howToPlayIcon}>❓</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.howToPlayTitle}>Как играть?</Text>
+            <Text style={styles.howToPlayDesc}>
+              Напомни, куда девать монетки: «Надо», «Хочу» и копилка
+            </Text>
+          </View>
+          <Text style={styles.howToPlayArrow}>→</Text>
+        </Pressable>
+
+        {/* ============ 6. PERIOD CARD ============ */}        {period && !period.completed && (
           <View style={styles.periodCard}>
-            <View style={styles.periodHeaderRow}>
-              <View>
-                <Text style={styles.periodNumber}>
-                  День {profile.currentPeriodIndex + 1} с {profile.pet.name} ☀️
+            <View style={styles.periodTopRow}>
+              <View style={styles.periodSunBadge}>
+                <Text style={styles.periodSunText}>☀️</Text>
+              </View>
+              <View style={styles.periodTextCol}>
+                <Text style={styles.periodTitle}>
+                  День {profile.currentPeriodIndex + 1} с {profile.pet.name}
                 </Text>
                 <Text style={styles.periodSubtitle}>
-                  Твои карманные деньги: {period.income} монет 🪙
+                  Карманные деньги: {period.income} монет 🪙
                 </Text>
               </View>
-              <Text style={{ fontSize: 24 }}>☀️</Text>
             </View>
-
             <DuoButton
               title="Закончить день и лечь спать 🌙"
               variant="primary"
@@ -457,473 +555,681 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingBottom: 24,
+    paddingBottom: 32,
   },
 
-  /* Unit Selector */
-  unitHeader: {
+  /* ---------- Section scaffolding ---------- */
+  sectionPad: {
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: colors.textMuted,
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  cardPressed: {
+    transform: [{ translateY: 1 }],
+    opacity: 0.92,
+  },
+
+  /* ---------- Unit section ---------- */
+  unitSection: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1.5,
-    borderBottomColor: colors.border,
-    paddingBottom: spacing.md,
   },
-  unitSelectorRow: {
+  segmentWrap: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.sm,
+    backgroundColor: "#EFEAD9",
+    borderRadius: 18,
+    padding: 4,
+    gap: 4,
   },
-  unitTab: {
-    alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: radius.md,
-    backgroundColor: "#F7F4EB",
-    borderWidth: 1.5,
-    borderColor: colors.border,
+  segment: {
     flex: 1,
-    marginHorizontal: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
+    paddingVertical: 8,
+    borderRadius: 14,
   },
-  unitTabActive: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
+  segmentActive: {
+    backgroundColor: colors.primary,
+    shadowColor: "#3E6B43",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  unitTabBadge: {
-    fontSize: 16,
+  segmentPressed: {
+    opacity: 0.85,
   },
-  unitTabText: {
-    fontSize: 11,
-    fontWeight: "700",
+  segmentBadge: {
+    fontSize: 15,
+  },
+  segmentText: {
+    fontSize: 10,
+    fontWeight: "800",
     color: colors.textMuted,
-    marginTop: 2,
+    marginTop: 1,
   },
-  unitTabTextActive: {
-    color: colors.primaryDark,
+  segmentTextActive: {
+    color: "#FFFFFF",
   },
 
-  /* Unit Banner Card */
-  unitBannerCard: {
-    backgroundColor: "#FAF8F3",
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
+  unitBanner: {
+    marginTop: spacing.sm,
+    backgroundColor: colors.primary,
+    borderRadius: 24,
     padding: spacing.md,
+    borderWidth: 2,
+    borderColor: "#447348",
+    borderBottomWidth: 5,
+    shadowColor: "#3E6B43",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  unitBannerTop: {
+  unitBannerTopRow: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.sm,
   },
-  unitBannerTitle: {
-    fontSize: fonts.body,
+  unitBannerTextCol: {
+    flex: 1,
+  },
+  unitChipRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 8,
+    flexWrap: "wrap",
+  },
+  unitChip: {
+    backgroundColor: "rgba(255,255,255,0.22)",
+    borderRadius: radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
+  },
+  unitChipDay: {
+    backgroundColor: "rgba(255,255,255,0.14)",
+  },
+  unitChipText: {
+    fontSize: 10,
     fontWeight: "800",
-    color: colors.text,
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
-  unitBannerDesc: {
+  unitChipTextDay: {
+    color: "#FFF3D6",
+  },
+  unitTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    lineHeight: 23,
+  },
+  unitDesc: {
     fontSize: fonts.caption,
-    color: colors.textMuted,
-    marginTop: 2,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.85)",
+    marginTop: 4,
     lineHeight: 16,
   },
-  unitPetPreview: {
-    marginLeft: spacing.sm,
+  petHeroWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 112,
+  },
+  petHeroCircle: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-  unitPetImage: {
-    width: 76,
-    height: 57,
+  petHeroPressed: {
+    transform: [{ scale: 0.95 }],
   },
-  unitPetName: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: colors.primaryDark,
-    marginTop: 2,
+  petHeroImage: {
+    width: 88,
+    height: 66,
   },
-  petStatusRow: {
-    flexDirection: "row",
-    gap: 6,
-    marginTop: 8,
-    flexWrap: "wrap",
-  },
-  petStatusBadge: {
-    backgroundColor: "#EFF6FF",
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
+  petHeroStatus: {
+    position: "absolute",
+    bottom: -8,
+    backgroundColor: "#FFFFFF",
     borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    borderWidth: 2,
+    borderColor: "#447348",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
-  petStatusBadgeMood: {
-    backgroundColor: "#FEF3C7",
-    borderColor: "#FDE68A",
+  petHeroStatusText: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#3E6B43",
   },
-  petStatusText: {
-    fontSize: 10,
+  petBubble: {
+    position: "absolute",
+    bottom: 112,
+    left: -58,
+    width: 168,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.border,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    zIndex: 10,
+    shadowColor: "#3E6B43",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  petBubbleText: {
+    fontSize: fonts.caption,
     fontWeight: "700",
     color: colors.text,
+    lineHeight: 16,
   },
-  unitProgressWrap: {
+  unitProgressRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
     gap: 8,
+    marginTop: 14,
   },
-  unitProgressBar: {
+  unitProgressBarTrack: {
     flex: 1,
-    height: 10,
-    backgroundColor: "#E6E0D2",
-    borderRadius: 5,
+    height: 18,
+    backgroundColor: "rgba(0,0,0,0.22)",
+    borderRadius: 9,
     overflow: "hidden",
   },
   unitProgressFill: {
     height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 5,
+    backgroundColor: "#FFC800",
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.35)",
   },
-  unitProgressText: {
-    fontSize: fonts.caption,
-    fontWeight: "700",
-    color: colors.textMuted,
+  unitProgressPct: {
+    position: "absolute",
+    top: 2.5,
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#7A5200",
+  },
+  unitProgressLabel: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
-  /* Learning Path Nodes */
-  pathContainer: {
-    paddingVertical: spacing.lg,
-    alignItems: "center",
+  /* ---------- Daily hub ---------- */
+  dailyRow: {
+    flexDirection: "row",
+    gap: 10,
   },
-  nodesWrapper: {
+  dailyCard: {
+    flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    width: "100%",
+    gap: 9,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 10,
   },
-  nodeRow: {
-    alignItems: "center",
-    marginVertical: 12,
-    position: "relative",
+  dailyCardGift: {
+    // neutral idle
   },
-  nodeCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+  dailyCardGiftActive: {
+    borderColor: "#F59E0B",
+    backgroundColor: "#FFFBEB",
+  },
+  dailyCardQuest: {
+    // neutral idle
+  },
+  dailyCardQuestActive: {
+    borderColor: "#10B981",
+    backgroundColor: "#F0FDF4",
+  },
+  dailyIconTile: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: "#F6F3EA",
+    borderWidth: 2,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    borderBottomWidth: 5,
+  },
+  dailyIconText: {
+    fontSize: 21,
+  },
+  dotBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: "#F59E0B",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  dotBadgeGreen: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: "#10B981",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  dailyTextCol: {
+    flex: 1,
+  },
+  dailyTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.text,
+  },
+  dailySubtitle: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  dailySubtitleHot: {
+    color: "#B45309",
+    fontWeight: "800",
+  },
+  dailySubtitleHotGreen: {
+    color: "#047857",
+    fontWeight: "800",
+  },
+
+  /* ---------- Adventure path ---------- */
+  pathSection: {
+    marginTop: spacing.lg,
+    alignItems: "center",
+  },
+  pathWrapper: {
+    alignItems: "center",
+    width: "100%",
+    paddingVertical: spacing.md,
+    position: "relative",
+  },
+  pathSpine: {
+    position: "absolute",
+    top: 40,
+    bottom: 40,
+    alignSelf: "center",
+    width: 0,
+    borderLeftWidth: 3,
+    borderLeftColor: "#E3DDCB",
+    borderStyle: "dashed",
+    borderRadius: 2,
+  },
+  nodeRow: {
+    marginVertical: 14,
+  },
+  nodeCol: {
+    alignItems: "center",
+  },
+  startBubble: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 6,
+    borderWidth: 2,
+    borderColor: "#447348",
+    shadowColor: "#3E6B43",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  startBubbleText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 1,
+  },
+  nodeCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderBottomWidth: 7,
   },
   nodeDone: {
-    backgroundColor: "#F59E0B",
-    borderBottomColor: "#D97706",
-    borderColor: "#FBBF24",
-    borderWidth: 1,
+    backgroundColor: "#FFC800",
+    borderColor: "#E5A600",
+    borderBottomColor: "#C98F00",
   },
   nodeCurrent: {
     backgroundColor: colors.primary,
-    borderBottomColor: "#416F45",
     borderColor: "#78AB7C",
-    borderWidth: 2,
+    borderBottomColor: "#3E6B43",
+    shadowColor: "#3E6B43",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 5,
   },
   nodeLocked: {
-    backgroundColor: "#E2DDD0",
-    borderBottomColor: "#C7C0B0",
-    borderColor: "#ECE8DD",
-    borderWidth: 1,
+    backgroundColor: "#E6E2D6",
+    borderColor: "#D5D0C1",
+    borderBottomColor: "#C3BDAC",
   },
   nodePressed: {
-    transform: [{ translateY: 2 }],
-    borderBottomWidth: 3,
+    transform: [{ translateY: 3 }],
+    borderBottomWidth: 4,
   },
   nodeIcon: {
-    fontSize: 28,
+    fontSize: 32,
   },
-  startBadge: {
-    position: "absolute",
-    top: -12,
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  startBadgeText: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: colors.primaryDark,
-  },
-  nodeLabelBox: {
+  nodeLabelWrap: {
     alignItems: "center",
-    marginTop: 6,
-    maxWidth: 160,
+    marginTop: 7,
+    maxWidth: 150,
   },
-  nodeLabelText: {
-    fontSize: fonts.small,
+  nodeTitle: {
+    fontSize: 12,
     fontWeight: "700",
     color: colors.text,
     textAlign: "center",
+    lineHeight: 15,
   },
-  nodeRewardText: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#B45309",
-    marginTop: 1,
+  rewardPill: {
+    marginTop: 4,
+    backgroundColor: "#FFF7E0",
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: "#F2D98C",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
-  pathLine: {
-    width: 4,
-    height: 24,
-    backgroundColor: "#E2DDD0",
-    borderRadius: 2,
-    marginTop: 6,
+  rewardPillText: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#A16207",
   },
 
-  /* Chest */
-  chestNodeRow: {
+  /* ---------- Chest ---------- */
+  chestWrap: {
     alignItems: "center",
-    marginVertical: 16,
+    marginTop: 10,
   },
   chestCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#FEF3C7",
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "#FFC800",
     borderWidth: 2,
-    borderColor: "#F59E0B",
-    borderBottomWidth: 5,
-    borderBottomColor: "#D97706",
+    borderColor: "#E5A600",
+    borderBottomWidth: 8,
+    borderBottomColor: "#C98F00",
     alignItems: "center",
     justifyContent: "center",
   },
   chestClaimed: {
-    backgroundColor: "#E6F4EA",
+    backgroundColor: colors.primaryLight,
     borderColor: colors.primary,
     borderBottomColor: colors.primaryDark,
+  },
+  chestIcon: {
+    fontSize: 38,
   },
   chestLabel: {
     fontSize: fonts.small,
     fontWeight: "800",
     color: colors.text,
-    marginTop: 6,
+    marginTop: 8,
+  },
+  chestRewardPill: {
+    marginTop: 4,
+    backgroundColor: "#FFF7E0",
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: "#F2D98C",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  chestRewardText: {
+    fontSize: 11,
+    fontWeight: "900",
+    color: "#A16207",
   },
 
-  /* Coach Owl Section */
-  coachOwlSection: {
+  /* ---------- Coach owl ---------- */
+  coachRow: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginHorizontal: spacing.md,
+    alignItems: "flex-start",
+    alignSelf: "stretch",
+    paddingHorizontal: spacing.md,
     marginTop: spacing.md,
     gap: spacing.sm,
   },
-  coachOwlBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#F0F7F1",
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+  coachAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderBottomWidth: 4,
     alignItems: "center",
     justifyContent: "center",
   },
-  coachOwlEmoji: {
+  coachAvatarEmoji: {
     fontSize: 26,
   },
   coachBubble: {
     flex: 1,
     backgroundColor: colors.speechBubble,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
+    borderRadius: 4,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    borderBottomRightRadius: 18,
+    borderWidth: 2,
     borderColor: colors.speechBubbleBorder,
-    padding: spacing.sm,
+    padding: spacing.sm + 2,
   },
   coachText: {
     fontSize: fonts.small,
     color: colors.text,
-    lineHeight: 18,
+    lineHeight: 19,
     fontWeight: "600",
   },
 
-  /* Feedback */
-  feedbackCard: {
-    backgroundColor: "#EFF8F1",
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
+  /* ---------- Goal & medals widgets ---------- */
+  widgetsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  widgetCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 12,
+    alignItems: "center",
+  },
+  widgetIconTile: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+  },
+  widgetIconTileSage: {
+    backgroundColor: colors.primaryLight,
     borderColor: colors.primary,
-    padding: spacing.md,
+  },
+  widgetIconTileAmber: {
+    backgroundColor: "#FFF7E0",
+    borderColor: "#F2C14E",
+  },
+  widgetIconText: {
+    fontSize: 26,
+  },
+  widgetTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.text,
+    textAlign: "center",
+  },
+  widgetSubtitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textMuted,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  widgetProgressTrack: {
+    width: "100%",
+    height: 10,
+    backgroundColor: "#EFEAD9",
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  widgetProgressFill: {
+    height: "100%",
+    backgroundColor: colors.primary,
+    borderRadius: 5,
+  },
+  widgetProgressFillAmber: {
+    backgroundColor: "#F59E0B",
+  },
+
+  /* ---------- Owl feedback ---------- */
+  feedbackCard: {
+    flexDirection: "row",
+    backgroundColor: "#F3F9F4",
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.primaryLight,
     marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
+    marginTop: spacing.lg,
+    overflow: "hidden",
+  },
+  feedbackAccent: {
+    width: 6,
+    backgroundColor: colors.primary,
+  },
+  feedbackBody: {
+    flex: 1,
+    padding: spacing.md,
   },
   feedbackTitle: {
     fontSize: fonts.small,
-    fontWeight: "800",
+    fontWeight: "900",
     color: colors.primaryDark,
-    marginBottom: 4,
+    marginBottom: 5,
   },
   feedbackItem: {
     fontSize: fonts.small,
     color: colors.text,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontWeight: "600",
   },
 
-  /* Period Footer Card */
-  periodCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  periodHeaderRow: {
+  /* ---------- How to play (ТЗ 2.5.1) ---------- */
+  howToPlayBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 12,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
   },
-  periodNumber: {
-    fontSize: fonts.body,
+  howToPlayIcon: {
+    fontSize: 22,
+  },
+  howToPlayTitle: {
+    fontSize: fonts.small,
     fontWeight: "800",
+    color: colors.text,
+  },
+  howToPlayDesc: {
+    fontSize: fonts.caption,
+    fontWeight: "600",
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  howToPlayArrow: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.primaryDark,
+  },
+
+  /* ---------- Period card ---------- */
+  periodCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderBottomWidth: 5,
+    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.lg,
+    gap: spacing.sm + 2,
+  },
+  periodTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  periodSunBadge: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    backgroundColor: "#FFF3D6",
+    borderWidth: 2,
+    borderColor: "#F2C14E",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  periodSunText: {
+    fontSize: 24,
+  },
+  periodTextCol: {
+    flex: 1,
+  },
+  periodTitle: {
+    fontSize: fonts.body,
+    fontWeight: "900",
     color: colors.text,
   },
   periodSubtitle: {
     fontSize: fonts.small,
-    color: colors.textMuted,
-  },
-  quickWidgetsRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
-  },
-  goalWidgetCard: {
-    flex: 1.2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-  },
-  goalWidgetLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    flex: 1,
-  },
-  goalWidgetTitle: {
-    fontSize: fonts.small,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  goalWidgetSubtitle: {
-    fontSize: fonts.caption,
+    fontWeight: "600",
     color: colors.textMuted,
     marginTop: 1,
-  },
-  medalWidgetCard: {
-    flex: 0.9,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FFFBEB",
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: "#FCD34D",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-  },
-  medalWidgetTitle: {
-    fontSize: fonts.small,
-    fontWeight: "800",
-    color: "#92400E",
-  },
-  medalWidgetSubtitle: {
-    fontSize: fonts.caption,
-    color: "#B45309",
-    marginTop: 1,
-  },
-  petBubbleBox: {
-    backgroundColor: "#F0FDF4",
-    borderWidth: 1.5,
-    borderColor: "#BBF7D0",
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    marginTop: spacing.sm,
-  },
-  petBubbleText: {
-    fontSize: fonts.caption,
-    fontWeight: "700",
-    color: "#166534",
-    lineHeight: 18,
-  },
-  /* Daily Hub Styles */
-  dailyHubRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginHorizontal: spacing.md,
-    marginTop: 8,
-  },
-  dailyHubBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FFFFFF",
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    position: "relative",
-  },
-  dailyHubBtnActive: {
-    backgroundColor: "#FFFBEB",
-    borderColor: "#F59E0B",
-    borderWidth: 2,
-  },
-  dailyQuestBtnActive: {
-    backgroundColor: "#F0FDF4",
-    borderColor: "#10B981",
-    borderWidth: 2,
-  },
-  dailyHubTitle: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: colors.text,
-  },
-  dailyHubSubtitle: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 1,
-  },
-  dailyBadgePill: {
-    position: "absolute",
-    top: -6,
-    right: 8,
-    backgroundColor: "#F59E0B",
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  questBadgePill: {
-    position: "absolute",
-    top: -6,
-    right: 8,
-    backgroundColor: "#10B981",
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  dailyBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 8,
-    fontWeight: "900",
   },
 });

@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 8,
-    paddingVertical: 7,
+    paddingVertical: 4,
     backgroundColor: colors.background,
     borderBottomWidth: 1.5,
     borderBottomColor: colors.border,
@@ -110,9 +110,11 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: radius.pill,
-    paddingHorizontal: 7,
+    paddingHorizontal: 10,
+    minHeight: 40,
     paddingVertical: 4,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -162,9 +164,9 @@ const styles = StyleSheet.create({
     color: colors.primaryDark,
   },
   adultButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
@@ -172,6 +174,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   adultIcon: {
-    fontSize: 14,
+    fontSize: 18,
   },
 });
