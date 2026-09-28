@@ -22,15 +22,6 @@ import { useStore } from "../store/store";
 import { colors, fonts, radius, spacing } from "../theme";
 import { playClickSound } from "../utils/sound";
 
-const ANIM_CHIPS: { name: CatAnimationName; label: string }[] = [
-  { name: "Happy_Success", label: "🎉 Радость" },
-  { name: "Happy_Idle", label: "😻 Мурчит" },
-  { name: "Idle_Default", label: "🐾 Покой" },
-  { name: "Sad_Idle", label: "😿 Грустит" },
-  { name: "Sad", label: "😢 Плачет" },
-  { name: "Sad_To_Normal", label: "✨ Утешить" },
-];
-
 export default function Progress() {
   const router = useRouter();
   const profile = useStore((s) => s.profile);
@@ -42,7 +33,7 @@ export default function Progress() {
   const [showNightModal, setShowNightModal] = useState(false);
   const [petMessage, setPetMessage] = useState<string | null>(null);
   const [heartCount, setHeartCount] = useState<number[]>([]);
-  const [current3DAnim, setCurrent3DAnim] = useState<CatAnimationName>("Idle_Default");
+  const [current3DAnim, setCurrent3DAnim] = useState<CatAnimationName | undefined>(undefined);
   const [showDiaryModal, setShowDiaryModal] = useState(false);
 
   if (!profile) return null;
@@ -63,7 +54,10 @@ export default function Progress() {
     setPetMessage(res.message);
     setHeartCount((prev) => [...prev, Date.now()]);
     setCurrent3DAnim("Happy_Success");
-    setTimeout(() => setPetMessage(null), 3500);
+    setTimeout(() => {
+      setPetMessage(null);
+      setCurrent3DAnim(undefined);
+    }, 3500);
     setTimeout(() => {
       setHeartCount((prev) => prev.slice(1));
     }, 1500);
@@ -73,7 +67,10 @@ export default function Progress() {
     const res = feedSnackInteractive("apple");
     setPetMessage(res.message);
     setCurrent3DAnim(profile.pet.state.mood < 40 ? "Sad_To_Normal" : "Happy_Success");
-    setTimeout(() => setPetMessage(null), 3500);
+    setTimeout(() => {
+      setPetMessage(null);
+      setCurrent3DAnim(undefined);
+    }, 3500);
   };
 
   const handleBedtimePress = () => {
@@ -250,31 +247,6 @@ export default function Progress() {
             </Pressable>
           </View>
 
-          {/* 3D Animation Showcase Pills (Wrapped 2 rows, ZERO horizontal scrollbar!) */}
-          <View style={styles.animChipsWrap}>
-            {ANIM_CHIPS.map((chip) => {
-              const isActive = current3DAnim === chip.name;
-              return (
-                <Pressable
-                  key={chip.name}
-                  style={[styles.animChip, isActive && styles.animChipActive]}
-                  onPress={() => {
-                    playClickSound();
-                    setCurrent3DAnim(chip.name);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.animChipText,
-                      isActive && styles.animChipTextActive,
-                    ]}
-                  >
-                    {chip.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
 
           {/* Open Diary & Goals Modal Button */}
           <Pressable
@@ -751,40 +723,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "600",
     color: colors.textMuted,
-  },
-
-  /* 3D Animations Switcher Grid (Flex-wrap, NO horizontal scroll) */
-  animChipsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 6,
-    maxWidth: 390,
-  },
-  animChip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  animChipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryDark,
-  },
-  animChipText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  animChipTextActive: {
-    color: "#FFFFFF",
   },
 
   /* Scroll Down Indicator Button */
