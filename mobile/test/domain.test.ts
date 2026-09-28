@@ -287,12 +287,20 @@ test("Daily: canClaimDailyBonus, canDoDailyQuest, and 7-day reward structure", (
   assert.strictEqual(canClaimDailyBonus(profile), true);
   assert.strictEqual(canDoDailyQuest(profile), true);
 
-  // Once claimed today, claimable returns false in normal mode
+  // Once claimed for today and this period, claimable returns false in normal mode
   const today = getTodayDateString();
   profile.lastDailyBonusDate = today;
+  profile.lastDailyBonusPeriod = profile.currentPeriodIndex;
   profile.dailyQuestCompletedDate = today;
+  profile.dailyQuestCompletedPeriod = profile.currentPeriodIndex;
   assert.strictEqual(canClaimDailyBonus(profile), false);
   assert.strictEqual(canDoDailyQuest(profile), false);
+
+  // If period advances to next day, becomes claimable again for the new day
+  profile.currentPeriodIndex = 1;
+  assert.strictEqual(canClaimDailyBonus(profile), true);
+  assert.strictEqual(canDoDailyQuest(profile), true);
+  profile.currentPeriodIndex = 0;
 
   // In demoMode, always allows instant testing
   profile.demoMode = true;

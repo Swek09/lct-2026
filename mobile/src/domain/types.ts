@@ -95,7 +95,9 @@ export interface Profile {
   unlockedAchievementIds?: string[];
   dailyStreak?: number;
   lastDailyBonusDate?: string;
+  lastDailyBonusPeriod?: number;
   ownedItemIds?: string[];
   dailyQuestCompletedDate?: string;
+  dailyQuestCompletedPeriod?: number;
   customGoals?: Goal[];
 }

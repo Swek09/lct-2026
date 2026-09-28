@@ -372,6 +372,7 @@ export const useStore = create<StoreState>()(
           balance: profile.balance + reward.coins,
           dailyStreak: streak,
           lastDailyBonusDate: todayStr,
+          lastDailyBonusPeriod: profile.currentPeriodIndex,
         };
         updatedProf.unlockedAchievementIds = computeAchievements(updatedProf);
         set({
@@ -446,6 +447,7 @@ export const useStore = create<StoreState>()(
             ...profile,
             balance: profile.balance + quest.reward,
             dailyQuestCompletedDate: todayStr,
+            dailyQuestCompletedPeriod: profile.currentPeriodIndex,
           };
           updatedProf.unlockedAchievementIds = computeAchievements(updatedProf);
           set({

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { useStore } from "../store/store";
 import { colors } from "../theme";
@@ -58,7 +58,7 @@ export function ConfettiEffect({ active = true, count = 26 }: ConfettiEffectProp
   const animationsEnabled = useStore((s) => s.animationsEnabled);
   const enabled = animationsEnabled && active;
   const [mountKey, setMountKey] = useState(0);
-  const wasEnabled = React.useRef(false);
+  const wasEnabled = useRef(false);
 
   useEffect(() => {
     // Перегенерация частиц при каждом новом включении эффекта
@@ -132,8 +132,7 @@ function ConfettiPieceView({ piece }: { piece: ConfettiPiece }) {
       drifting.stop();
       spinning.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [piece.id]);
+  }, [anim.drift, anim.fall, anim.spin, piece.delay, piece.drift, piece.duration]);
 
   if (!visible) return null;
 

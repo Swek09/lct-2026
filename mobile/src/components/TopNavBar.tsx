@@ -83,9 +83,27 @@ export function TopNavBar({ showAdult = true }: TopNavBarProps) {
         <Text style={styles.demoText}>{profile.demoMode ? "ДЕМО" : "Обычн"}</Text>
       </Pressable>
 
+      {/* Help / Terms & 3 Rules (ТЗ 2.5.1) */}
+      <Pressable
+        style={styles.adultButton}
+        onPress={() => {
+          playClickSound();
+          router.push("/terms");
+        }}
+        accessibilityLabel="Словарик и правила"
+        accessibilityRole="button"
+      >
+        <Text style={styles.adultIcon}>📖</Text>
+      </Pressable>
+
       {/* Settings / Adults */}
       {showAdult && (
-        <Pressable style={styles.adultButton} onPress={handleAdultPress}>
+        <Pressable
+          style={styles.adultButton}
+          onPress={handleAdultPress}
+          accessibilityLabel="Раздел для родителей"
+          accessibilityRole="button"
+        >
           <Text style={styles.adultIcon}>⚙️</Text>
         </Pressable>
       )}

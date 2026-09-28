@@ -102,7 +102,14 @@ export function getTodayDateString(): string {
 export function canClaimDailyBonus(profile: Profile): boolean {
   if (profile.demoMode) return true;
   const today = getTodayDateString();
-  return profile.lastDailyBonusDate !== today;
+  if (profile.lastDailyBonusDate !== today) return true;
+  if (
+    profile.lastDailyBonusPeriod !== undefined &&
+    profile.currentPeriodIndex > profile.lastDailyBonusPeriod
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export function getTodayQuest(profile: Profile): DailyQuest {
@@ -113,5 +120,12 @@ export function getTodayQuest(profile: Profile): DailyQuest {
 export function canDoDailyQuest(profile: Profile): boolean {
   if (profile.demoMode) return true;
   const today = getTodayDateString();
-  return profile.dailyQuestCompletedDate !== today;
+  if (profile.dailyQuestCompletedDate !== today) return true;
+  if (
+    profile.dailyQuestCompletedPeriod !== undefined &&
+    profile.currentPeriodIndex > profile.dailyQuestCompletedPeriod
+  ) {
+    return true;
+  }
+  return false;
 }

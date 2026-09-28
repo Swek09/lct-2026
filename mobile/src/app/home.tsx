@@ -28,7 +28,6 @@ export default function Home() {
   const router = useRouter();
   const profile = useStore((s) => s.profile);
   const finishPeriod = useStore((s) => s.finishPeriod);
-  const startNextPeriod = useStore((s) => s.startNextPeriod);
   const lastFeedback = useStore((s) => s.lastFeedback);
 
   const [activeUnitId, setActiveUnitId] = useState(1);
@@ -531,10 +530,7 @@ export default function Home() {
       <NightTransitionModal
         visible={showNightModal}
         onWakeUp={() => {
-          const res = finishPeriod();
-          if (res.ok) {
-            startNextPeriod();
-          }
+          finishPeriod();
           setShowNightModal(false);
         }}
         onCancel={() => setShowNightModal(false)}

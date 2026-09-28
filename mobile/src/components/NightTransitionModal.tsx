@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { ConfettiEffect } from "./ConfettiEffect";
 import { PetAvatar } from "./PetAvatar";
 import { useStore } from "../store/store";
+import { computeNextIncome } from "../domain/period";
 import { colors, fonts, radius } from "../theme";
 import { playCoinSound, playFanfareSound } from "../utils/sound";
 
@@ -107,11 +108,16 @@ export function NightTransitionModal({
               </Text>
 
               {/* Morning Payout Showcase */}
-              <View style={styles.payoutBadge}>
-                <Text style={styles.payoutEmoji}>🪙</Text>
-                <Text style={styles.payoutAmount}>+100 МОНЕТ</Text>
-                <Text style={styles.payoutDesc}>Карманные деньги на День {dayNumber + 1}</Text>
-              </View>
+              {(() => {
+                const nextIncome = computeNextIncome(profile);
+                return (
+                  <View style={styles.payoutBadge}>
+                    <Text style={styles.payoutEmoji}>🪙</Text>
+                    <Text style={styles.payoutAmount}>+{nextIncome} МОНЕТ</Text>
+                    <Text style={styles.payoutDesc}>Карманные деньги на День {dayNumber + 1}</Text>
+                  </View>
+                );
+              })()}
 
               <View style={styles.petWrap}>
                 <PetAvatar pet={profile.pet} size={110} />

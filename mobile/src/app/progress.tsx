@@ -509,10 +509,7 @@ export default function Progress() {
       <NightTransitionModal
         visible={showNightModal}
         onWakeUp={() => {
-          const res = finishPeriod();
-          if (res.ok) {
-            startNextPeriod();
-          }
+          finishPeriod();
           setShowNightModal(false);
         }}
         onCancel={() => setShowNightModal(false)}
