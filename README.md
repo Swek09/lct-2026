@@ -92,7 +92,7 @@ npm install
 
 ### 2. Запуск тестов и линтера
 ```bash
-npm test         # Запуск 8 модульных тестов доменной экономики
+npm test         # Запуск 13 модульных тестов доменной экономики
 npm run lint     # Проверка ESLint (0 errors, 0 warnings)
 npx tsc --noEmit # Проверка типов TypeScript (0 errors)
 ```
