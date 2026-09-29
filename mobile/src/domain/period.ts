@@ -50,11 +50,14 @@ export function canFinishPeriod(profile: Profile): {
       missingAction: "budget",
     };
   }
-  const hasMandatory = period.expenses.some((e) => e.type === "mandatory");
-  if (!hasMandatory) {
+  const hasMeal = period.expenses.some(
+    (e) => e.itemId === "food_bowl" && e.type === "mandatory",
+  );
+  if (!hasMeal) {
     return {
       ok: false,
-      reason: "Питомец ещё не пообедал! Купи полезную еду в Лавке из конверта «Надо», чтобы он не ложился спать голодным 🥣",
+      reason:
+        "Питомец ещё не пообедал! Купи полезную еду («Сытный обед» 🥣) в Лавке из конверта «Надо», чтобы он не ложился спать голодным",
       missingAction: "shop",
     };
   }

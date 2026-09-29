@@ -74,9 +74,9 @@ export function actualTotalSpent(period: GamePeriod): number {
 export function planWasOnTrack(period: GamePeriod): boolean {
   if (!period.plan || !period.planConfirmed) return false;
 
-  // 1. Питомец накормлен (куплен сытный обед либо получена сытость)
+  // 1. Питомец накормлен (обязательный сытный обед «food_bowl» куплен именно в текущем периоде)
   const petFed = period.expenses.some(
-    (e) => e.itemId === "food_bowl" || (e.impact && e.impact.satiety >= 20),
+    (e) => e.itemId === "food_bowl" && e.type === "mandatory",
   );
 
   // 2. Лимит конверта «Надо» запланирован (>0) и фактически не превышен
