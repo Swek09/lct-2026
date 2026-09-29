@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-const ROOT = 'D:/lct-2026/mobile';
+const ROOT = path.resolve(__dirname);
 const PUBLIC = path.join(ROOT, 'public');
 
 const MIME = {

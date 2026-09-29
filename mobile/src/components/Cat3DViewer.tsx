@@ -9,20 +9,43 @@ import {
   ViewStyle,
 } from "react-native";
 import { PetAvatar } from "./PetAvatar";
+import { petHats } from "../content/pets";
 import type { Pet } from "../domain/types";
 import { colors, radius } from "../theme";
 
 export type CatAnimationName =
   | "Happy_Idle"
+  | "HappyIdle"
+  | "happy_idle"
   | "Happy_Success"
+  | "HappySuccess"
+  | "Success"
   | "Idle_Default"
+  | "IdleDefault"
+  | "idle_default"
   | "Sad"
   | "Sad_Idle"
+  | "SadIdle"
+  | "sad_idle"
   | "Sad_To_Normal";
+
+export function normalizeCatAnimationName(name: string): string {
+  const lower = name.toLowerCase().replace(/_/g, "");
+  if (lower === "happyidle") return "Happy_Idle";
+  if (lower === "happysuccess" || lower === "success") return "Happy_Success";
+  if (lower === "idledefault") return "Idle_Default";
+  if (lower === "sadidle") return "Sad_Idle";
+  if (lower === "sad") return "Sad";
+  if (lower === "sadtonormal") return "Sad_To_Normal";
+  return name;
+}
 
 interface Cat3DViewerProps {
   pet?: Pet;
   animation?: CatAnimationName;
+  animationNonce?: number;
+  colorId?: string;
+  hatId?: string;
   size?: number;
   width?: number | string;
   height?: number | string;
@@ -41,6 +64,9 @@ interface Cat3DViewerProps {
 export function Cat3DViewer({
   pet,
   animation,
+  animationNonce,
+  colorId,
+  hatId,
   size = 380,
   width = "100%",
   height,
@@ -61,16 +87,33 @@ export function Cat3DViewer({
 
   const effectiveHeight = height ?? (style ? "100%" : (size ?? 380));
 
-  // Determine animation based on pet mood if not explicitly passed
-  const activeAnimation: CatAnimationName =
+  const activeColorId = colorId ?? pet?.customization?.colorId ?? "gray";
+  const activeHatId = hatId ?? pet?.customization?.hatId ?? "none";
+
+  const activeColorRef = useRef<string>(activeColorId);
+  const activeHatRef = useRef<string>(activeHatId);
+  const applyColorRef = useRef<(cId: string) => void>(() => {});
+  const applyHatRef = useRef<(hId: string) => void>(() => {});
+  const currentHatObjRef = useRef<any>(null);
+
+  useEffect(() => {
+    activeColorRef.current = activeColorId;
+  }, [activeColorId]);
+
+  useEffect(() => {
+    activeHatRef.current = activeHatId;
+  }, [activeHatId]);
+
+  // Determine animation based on pet state if not explicitly passed:
+  // In normal state, baseline animation is Idle_Default (or Sad_Idle if mood/satiety is low)
+  const rawAnimation: CatAnimationName =
     animation ??
     (pet
-      ? pet.state.mood >= 70
-        ? "Happy_Idle"
-        : pet.state.mood < 40 || pet.state.satiety < 40
+      ? pet.state.mood < 40 || pet.state.satiety < 40
         ? "Sad_Idle"
         : "Idle_Default"
       : "Idle_Default");
+  const activeAnimation = normalizeCatAnimationName(rawAnimation) as CatAnimationName;
 
   // Keep ref to current animation name to handle prop updates
   const animRef = useRef<CatAnimationName>(activeAnimation);
@@ -125,21 +168,40 @@ export function Cat3DViewer({
 
         const scene = new THREE.Scene();
 
-        // Soft studio lighting
-        const ambient = new THREE.AmbientLight(0xffffff, 1.8);
+        // Balanced 3-point + Rim + Floor bounce lighting
+        const ambient = new THREE.AmbientLight(0xfff8f0, 0.75);
         scene.add(ambient);
 
-        const keyLight = new THREE.DirectionalLight(0xfffaed, 2.2);
-        keyLight.position.set(3, 5, 4);
+        const keyLight = new THREE.DirectionalLight(0xfffaed, 1.85);
+        keyLight.position.set(2.8, 4.5, 3.5);
+        keyLight.castShadow = true;
+        keyLight.shadow.mapSize.set(1024, 1024);
+        keyLight.shadow.camera.near = 0.5;
+        keyLight.shadow.camera.far = 15;
+        keyLight.shadow.camera.left = -2;
+        keyLight.shadow.camera.right = 2;
+        keyLight.shadow.camera.top = 2;
+        keyLight.shadow.camera.bottom = -2;
+        keyLight.shadow.bias = -0.0005;
         scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0xbad7ff, 1.0);
-        fillLight.position.set(-3, 2, -2);
+        const fillLight = new THREE.DirectionalLight(0xb2ceff, 0.75);
+        fillLight.position.set(-3.0, 2.2, 1.0);
         scene.add(fillLight);
 
-        const frontLight = new THREE.DirectionalLight(0xfff8ee, 1.4);
-        frontLight.position.set(0, 1.5, 4);
+        // 2.1 & 1.A: Rim light to catch ears, head, and back of the cat
+        const rimLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        rimLight.position.set(0, 3.5, -3.2);
+        scene.add(rimLight);
+
+        const frontLight = new THREE.DirectionalLight(0xfff8ee, 0.65);
+        frontLight.position.set(0, 1.2, 3.5);
         scene.add(frontLight);
+
+        // Warm floor bounce light
+        const bounceLight = new THREE.DirectionalLight(0xf2e2c8, 0.4);
+        bounceLight.position.set(0, -2.5, 1.0);
+        scene.add(bounceLight);
 
         // Procedural Stylized Cozy Woven Rug & Shadow in Three.js
         if (showRug) {
@@ -212,10 +274,22 @@ export function Cat3DViewer({
         camera.position.set(0, cameraY, cameraDistance);
         camera.lookAt(0, cameraLookAtY, 0);
 
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: true,
+          powerPreference: "high-performance",
+        });
         renderer.setSize(initialW, initialH);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+        // 2.1: ACES Filmic Tone Mapping + sRGB color space
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.15;
+
+        // Soft real-time shadows
         renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         const dom = renderer.domElement;
         dom.style.display = "block";
@@ -304,6 +378,119 @@ export function Cat3DViewer({
             sceneObj.position.z = -center.z;
 
             scene.add(sceneObj);
+            if (typeof window !== "undefined") {
+              (window as any).__catViewer = { scene, sceneObj, THREE };
+            }
+
+            // Apply coat color and hat
+            const furMeshNames = new Set(["Cube", "body001", "BézierCurve", "leg-front-right001", "Scene.007", "Scene.010"]);
+
+            const applyColor = (cId: string) => {
+              if (!sceneObj) return;
+              sceneObj.traverse((o: any) => {
+                if (o.isMesh && furMeshNames.has(o.name)) {
+                  if (!o.userData.originalMat) {
+                    o.userData.originalMat = o.material;
+                    o.material = o.material.clone();
+                  }
+                  const mat = o.material;
+                  if (cId === "ginger") {
+                    mat.color.set("#ffb070");
+                    mat.emissive.set("#d95c14").multiplyScalar(0.85);
+                  } else if (cId === "white") {
+                    mat.color.set("#ffffff");
+                    mat.emissive.set("#c5cdd8").multiplyScalar(0.9);
+                  } else if (cId === "black") {
+                    mat.color.set("#1a1c22");
+                    mat.emissive.set("#000000");
+                  } else {
+                    // "gray" or default base
+                    mat.color.set("#ffffff");
+                    mat.emissive.set("#000000");
+                  }
+                }
+              });
+            };
+            applyColorRef.current = applyColor;
+
+            let hatRequestId = 0;
+
+            const removeAllHats = () => {
+              if (!sceneObj) return;
+              sceneObj.traverse((child: any) => {
+                if (child.userData?.isHat || child.name === "CatHat") {
+                  if (child.parent) {
+                    child.parent.remove(child);
+                  }
+                  child.traverse((c: any) => {
+                    if (c.isMesh) {
+                      c.geometry?.dispose();
+                      if (Array.isArray(c.material)) {
+                        c.material.forEach((m: any) => m.dispose());
+                      } else {
+                        c.material?.dispose();
+                      }
+                    }
+                  });
+                }
+              });
+              currentHatObjRef.current = null;
+            };
+
+            const applyHat = (hId: string) => {
+              if (!sceneObj) return;
+              removeAllHats();
+
+              if (!hId || hId === "none") return;
+
+              const hatInfo = petHats.find((h) => h.id === hId);
+              if (!hatInfo || !hatInfo.modelFile) return;
+
+              const currentRequestId = ++hatRequestId;
+
+              let bodyBone: any = null;
+              sceneObj.traverse((child: any) => {
+                if (child.isBone && child.name === "Body") {
+                  bodyBone = child;
+                }
+              });
+
+              loader.load(
+                `/models/${hatInfo.modelFile}`,
+                (hatGltf: any) => {
+                  if (!isMounted || currentRequestId !== hatRequestId) return;
+                  removeAllHats();
+
+                  const hatScene = hatGltf.scene;
+                  hatScene.name = "CatHat";
+                  hatScene.userData.isHat = true;
+                  hatScene.traverse((c: any) => {
+                    c.userData.isHat = true;
+                  });
+
+                  if (bodyBone) {
+                    bodyBone.add(hatScene);
+                    hatScene.position.set(0, hatInfo.yOffset ?? -0.2297, hatInfo.zOffset ?? 0);
+                    hatScene.rotation.set(0, 0, 0);
+                    hatScene.scale.set(1, 1, 1);
+                  } else {
+                    sceneObj.add(hatScene);
+                    hatScene.position.set(0, 0, 0);
+                    hatScene.rotation.set(0, 0, 0);
+                    hatScene.scale.set(1, 1, 1);
+                  }
+                  currentHatObjRef.current = hatScene;
+                },
+                undefined,
+                (err: any) => {
+                  console.warn("Failed to load hat model:", hatInfo.modelFile, err);
+                }
+              );
+            };
+            applyHatRef.current = applyHat;
+            // Apply initial color and hat
+            applyColor(activeColorRef.current);
+            applyHat(activeHatRef.current);
 
             // Setup animations with instant switching (zero crossfade, pure crisp cut)
             if (gltf.animations && gltf.animations.length > 0) {
@@ -316,17 +503,41 @@ export function Cat3DViewer({
                 action.setLoop(THREE.LoopRepeat, Infinity);
                 actions[clip.name] = action;
               });
+              if (actions["Happy_Idle"]) {
+                actions["HappyIdle"] = actions["Happy_Idle"];
+                actions["happy_idle"] = actions["Happy_Idle"];
+              }
+              if (actions["Happy_Success"]) {
+                actions["HappySuccess"] = actions["Happy_Success"];
+                actions["Success"] = actions["Happy_Success"];
+                actions["success"] = actions["Happy_Success"];
+              }
+              if (actions["Idle_Default"]) {
+                actions["IdleDefault"] = actions["Idle_Default"];
+                actions["idle_default"] = actions["Idle_Default"];
+              }
+              if (actions["Sad_Idle"]) {
+                actions["SadIdle"] = actions["Sad_Idle"];
+                actions["sad_idle"] = actions["Sad_Idle"];
+              }
               actionsMapRef.current = actions;
 
               const transitionTo = (target: CatAnimationName) => {
                 const currentActions = actionsMapRef.current;
-                if (!currentActions || !currentActions[target]) return;
+                const normalizedTarget = normalizeCatAnimationName(target);
+                if (!currentActions || !currentActions[normalizedTarget]) return;
 
                 const prevName = currentStateRef.current;
-                if (prevName === target) return;
-
                 const prevAction = currentActions[prevName];
-                const nextAction = currentActions[target];
+                const nextAction = currentActions[normalizedTarget];
+
+                if (prevName === normalizedTarget) {
+                  if (nextAction) {
+                    nextAction.reset();
+                    nextAction.play();
+                  }
+                  return;
+                }
 
                 // Stop previous animation immediately (NO crossfade / zero blending)
                 if (prevAction) {
@@ -342,7 +553,7 @@ export function Cat3DViewer({
                 nextAction.setEffectiveWeight(1);
                 nextAction.play();
 
-                currentStateRef.current = target;
+                currentStateRef.current = normalizedTarget as CatAnimationName;
               };
 
               playStateRef.current = transitionTo;
@@ -397,6 +608,12 @@ export function Cat3DViewer({
       if (resizeObserver) {
         resizeObserver.disconnect();
       }
+      if (currentHatObjRef.current) {
+        if (currentHatObjRef.current.parent) {
+          currentHatObjRef.current.parent.remove(currentHatObjRef.current);
+        }
+        currentHatObjRef.current = null;
+      }
       if (mixerRef.current) {
         mixerRef.current.stopAllAction();
       }
@@ -410,7 +627,19 @@ export function Cat3DViewer({
   useEffect(() => {
     if (!loaded) return;
     playStateRef.current(activeAnimation);
-  }, [activeAnimation, loaded]);
+  }, [activeAnimation, loaded, animationNonce]);
+
+  // Handle coat color prop updates
+  useEffect(() => {
+    if (!loaded) return;
+    applyColorRef.current(activeColorId);
+  }, [activeColorId, loaded]);
+
+  // Handle hat prop updates
+  useEffect(() => {
+    if (!loaded) return;
+    applyHatRef.current(activeHatId);
+  }, [activeHatId, loaded]);
 
   // Fallback for native mobile or if loading failed
   if (Platform.OS !== "web" || loadError) {

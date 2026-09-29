@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { DebugModal } from "./DebugModal";
 import { useStore } from "../store/store";
 import { colors, radius } from "../theme";
 
@@ -14,6 +16,8 @@ export function TopNavBar({ showAdult = true }: TopNavBarProps) {
   const profile = useStore((s) => s.profile);
   const soundEnabled = useStore((s) => s.soundEnabled);
   const toggleSound = useStore((s) => s.toggleSound);
+
+  const [showDebugModal, setShowDebugModal] = useState(false);
 
   if (!profile) return null;
 
@@ -38,68 +42,87 @@ export function TopNavBar({ showAdult = true }: TopNavBarProps) {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Streak */}
-      <View style={styles.badge}>
-        <Text style={styles.icon}>🔥</Text>
-        <Text style={styles.badgeText}>{streakDays}</Text>
-      </View>
-
-      {/* Coins */}
-      <View style={[styles.badge, styles.coinBadge]}>
-        <Text style={styles.icon}>🪙</Text>
-        <Text style={[styles.badgeText, styles.coinText]}>{formatCoins(profile.balance)}</Text>
-      </View>
-
-      {/* Health / Mood */}
-      <View style={[styles.badge, styles.healthBadge]}>
-        <Text style={styles.icon}>💖</Text>
-        <Text style={[styles.badgeText, styles.healthText]}>{healthAvg}%</Text>
-      </View>
-
-      {/* Sound Toggle (ТЗ 3.6: звуки можно отключить) */}
-      <Pressable
-        style={[styles.badge, soundEnabled ? styles.soundActive : styles.soundMuted]}
-        onPress={handleSoundToggle}
-        accessibilityLabel={soundEnabled ? "Выключить звук" : "Включить звук"}
-        accessibilityRole="button"
-      >
-        <Text style={styles.icon}>{soundEnabled ? "🔊" : "🔇"}</Text>
-      </Pressable>
-
-      {/* Demo Mode Indicator (shown only if active from Adult settings) */}
-      {profile.demoMode && (
-        <View style={[styles.badge, styles.demoActive]}>
-          <Text style={styles.icon}>🧪</Text>
-          <Text style={styles.demoText}>ДЕМО</Text>
+    <>
+      <View style={styles.container}>
+        {/* Streak */}
+        <View style={styles.badge}>
+          <Text style={styles.icon}>🔥</Text>
+          <Text style={styles.badgeText}>{streakDays}</Text>
         </View>
-      )}
 
-      {/* Help / Terms & 3 Rules (ТЗ 2.5.1) */}
-      <Pressable
-        style={styles.adultButton}
-        onPress={() => {
-          playClickSound();
-          router.push("/terms");
-        }}
-        accessibilityLabel="Словарик и правила"
-        accessibilityRole="button"
-      >
-        <Text style={styles.adultIcon}>📖</Text>
-      </Pressable>
+        {/* Coins */}
+        <View style={[styles.badge, styles.coinBadge]}>
+          <Text style={styles.icon}>🪙</Text>
+          <Text style={[styles.badgeText, styles.coinText]}>{formatCoins(profile.balance)}</Text>
+        </View>
 
-      {/* Settings / Adults */}
-      {showAdult && (
+        {/* Health / Mood */}
+        <View style={[styles.badge, styles.healthBadge]}>
+          <Text style={styles.icon}>💖</Text>
+          <Text style={[styles.badgeText, styles.healthText]}>{healthAvg}%</Text>
+        </View>
+
+        {/* Sound Toggle */}
         <Pressable
-          style={styles.adultButton}
-          onPress={handleAdultPress}
-          accessibilityLabel="Раздел для родителей"
+          style={[styles.badge, soundEnabled ? styles.soundActive : styles.soundMuted]}
+          onPress={handleSoundToggle}
+          accessibilityLabel={soundEnabled ? "Выключить звук" : "Включить звук"}
           accessibilityRole="button"
         >
-          <Text style={styles.adultIcon}>⚙️</Text>
+          <Text style={styles.icon}>{soundEnabled ? "🔊" : "🔇"}</Text>
         </Pressable>
-      )}
-    </View>
+
+        {/* Demo Mode Button */}
+        <Pressable
+          style={[
+            styles.badge,
+            profile.demoMode ? styles.demoActive : styles.demoInactive,
+          ]}
+          onPress={() => {
+            playClickSound();
+            setShowDebugModal(true);
+          }}
+          accessibilityLabel="Демонстрационный режим"
+          accessibilityRole="button"
+        >
+          <Text style={styles.icon}>🧪</Text>
+          <Text style={[styles.demoText, !profile.demoMode && styles.demoTextInactive]}>
+            {profile.demoMode ? "ДЕМО" : "ДЕМО"}
+          </Text>
+        </Pressable>
+
+        {/* Help / Terms & Rules */}
+        <Pressable
+          style={styles.adultButton}
+          onPress={() => {
+            playClickSound();
+            router.push("/terms");
+          }}
+          accessibilityLabel="Словарик и правила"
+          accessibilityRole="button"
+        >
+          <Text style={styles.adultIcon}>📖</Text>
+        </Pressable>
+
+        {/* Settings / Adults */}
+        {showAdult && (
+          <Pressable
+            style={styles.adultButton}
+            onPress={handleAdultPress}
+            accessibilityLabel="Раздел для родителей"
+            accessibilityRole="button"
+          >
+            <Text style={styles.adultIcon}>⚙️</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {/* Expert Debug / Demo Modal */}
+      <DebugModal
+        visible={showDebugModal}
+        onClose={() => setShowDebugModal(false)}
+      />
+    </>
   );
 }
 
@@ -143,7 +166,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   demoInactive: {
-    opacity: 0.7,
+    borderColor: "#D1D5DB",
+    backgroundColor: "#F9FAFB",
+    opacity: 0.85,
   },
   soundActive: {
     borderColor: colors.primary,
@@ -172,6 +197,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     color: colors.primaryDark,
+  },
+  demoTextInactive: {
+    color: colors.textMuted,
   },
   adultButton: {
     width: 44,

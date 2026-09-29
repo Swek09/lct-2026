@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -34,6 +34,8 @@ export default function Progress() {
   const [petMessage, setPetMessage] = useState<string | null>(null);
   const [heartCount, setHeartCount] = useState<number[]>([]);
   const [current3DAnim, setCurrent3DAnim] = useState<CatAnimationName | undefined>(undefined);
+  const [animNonce, setAnimNonce] = useState(0);
+  const petTimeoutRef = useRef<any>(null);
   const [showDiaryModal, setShowDiaryModal] = useState(false);
   const [bedtimeBlock, setBedtimeBlock] = useState<{
     reason: string;
@@ -59,11 +61,17 @@ export default function Progress() {
     const res = petPetInteractive();
     setPetMessage(res.message);
     setHeartCount((prev) => [...prev, Date.now()]);
-    setCurrent3DAnim("Happy_Success");
-    setTimeout(() => {
+    setCurrent3DAnim("Happy_Idle");
+    setAnimNonce((n) => n + 1);
+
+    if (petTimeoutRef.current) {
+      clearTimeout(petTimeoutRef.current);
+    }
+    petTimeoutRef.current = setTimeout(() => {
       setPetMessage(null);
       setCurrent3DAnim(undefined);
     }, 3500);
+
     setTimeout(() => {
       setHeartCount((prev) => prev.slice(1));
     }, 1500);
@@ -103,6 +111,7 @@ export default function Progress() {
         <Cat3DViewer
           pet={profile.pet}
           animation={current3DAnim}
+          animationNonce={animNonce}
           width="100%"
           cameraDistance={7.2}
           cameraY={1.1}

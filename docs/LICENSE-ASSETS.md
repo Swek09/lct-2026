@@ -13,12 +13,14 @@
 ---
 
 ## 2. Графика, векторные иллюстрации и иконки
-- **Аватары и фоны**: 
+- **Логотип, аватары и иконки**: 
+  - `logo.png` / `mobile/assets/images/logo.png` (Официальный мастер-логотип питомца Финни)
+  - `mobile/assets/images/icon.png` (Мастер-иконка приложения 1024×1024)
+  - `docs/rustore/icon_512x512.png` (Иконка RuStore 512×512)
   - `mobile/assets/images/background_cat.png`
   - `mobile/assets/images/wellcome_cat.png`
   - `mobile/assets/images/daily_background.png`
   - `mobile/assets/images/wellcome_bottom.png`
-  - `docs/rustore/icon_512x512.png` (Иконка RuStore 512×512)
 - **Авторство**: Команда проекта «Финни» (LCT-2026)
 - **Лицензия**: MIT License / All project rights granted for competition and distribution.
 

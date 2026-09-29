@@ -2,6 +2,7 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import {
   growthStageLabels,
   petAccessories,
+  petHats,
   petPalettes,
   petSpecies,
 } from "../content/pets";
@@ -24,6 +25,9 @@ export function PetAvatar({ pet, size = 140 }: { pet: Pet; size?: number }) {
     petAccessories[pet.customization.accessoryIndex] ??
     petAccessories[0];
 
+  const hat = petHats.find((h) => h.id === pet.customization?.hatId);
+  const badgeEmoji = hat && hat.id !== "none" ? hat.emoji : accessory?.symbol;
+
   const isHungry = pet.state && pet.state.satiety < 50;
   const isSad = pet.state && pet.state.mood < 50;
   const isSuperHappy = pet.state && pet.state.mood >= 80 && pet.state.satiety >= 80;
@@ -43,9 +47,9 @@ export function PetAvatar({ pet, size = 140 }: { pet: Pet; size?: number }) {
     >
       {species?.id === "cat" || !species || species?.emoji === "🐱" ? (
         <Image
-          source={require("../../assets/images/background_cat.png")}
-          style={{ width: size * 0.82, height: size * 0.82 }}
-          resizeMode="contain"
+          source={require("../../assets/images/logo.png")}
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+          resizeMode="cover"
         />
       ) : (
         <Text style={{ fontSize: size * 0.52, textAlign: "center" }}>
@@ -53,9 +57,9 @@ export function PetAvatar({ pet, size = 140 }: { pet: Pet; size?: number }) {
         </Text>
       )}
 
-      {accessory && accessory.symbol && accessory.symbol !== "⭐" && (
+      {badgeEmoji && badgeEmoji !== "⭐" && (
         <View style={styles.accessoryBadge}>
-          <Text style={styles.accessoryText}>{accessory.symbol}</Text>
+          <Text style={styles.accessoryText}>{badgeEmoji}</Text>
         </View>
       )}
 

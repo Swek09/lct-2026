@@ -367,4 +367,77 @@ test("Savings: deposit never exceeds goal cost and withdrawal supports arbitrary
   assert.strictEqual(saved, 55);
 });
 
+test("DemoMode: 5+ consecutive periods played back-to-back without calendar wait, and test profile resets to pristine state (ТЗ 2.5.13, 2.6)", () => {
+  const pet = createPet("finni", "Листик", {
+    speciesIndex: 0,
+    paletteIndex: 0,
+    accessoryIndex: 0,
+  });
+
+  const profile: Profile = {
+    id: "expert-test",
+    childName: "Листик",
+    pet,
+    currentPeriodIndex: 0,
+    balance: 100,
+    savingsByGoal: {},
+    selectedGoalId: null,
+    completedTasks: [],
+    isTestProfile: true,
+    demoMode: true,
+    createdAt: Date.now(),
+    onboarded: true,
+    periods: { 0: createPeriod(0, 100) },
+  };
+
+  // 1. In demo mode, periods can be completed back-to-back without calendar delay
+  for (let i = 0; i < 5; i++) {
+    const check = canFinishPeriod(profile);
+    assert.strictEqual(check.ok, true, `Period ${i} should be finishable in demo mode`);
+    profile.periods[i].completed = true;
+    profile.periods[i].completedAt = Date.now();
+    const { nextIncome } = shiftToNextPeriod(profile);
+    assert.ok(nextIncome >= 100, `Next income should be credited at period ${i + 1}`);
+  }
+
+  assert.strictEqual(profile.currentPeriodIndex, 5, "Must reach period 5 without blocking");
+  assert.ok(profile.balance > 500, "Balance must accumulate income across 5 consecutive periods");
+
+  // 2. Test profile reset resets to pristine initial state
+  profile.balance = 999;
+  profile.savingsByGoal = { bicycle: 150 };
+  profile.completedTasks = [{ taskId: "income_sources", success: true, reward: 20, timestamp: Date.now() }];
+  profile.ownedItemIds = ["food_bowl", "magic_hat"];
+
+  // Simulate resetProfile
+  const resetPet = createPet("finni", profile.pet.name, profile.pet.customization);
+  const resetProf: Profile = {
+    id: profile.id,
+    childName: profile.pet.name,
+    pet: resetPet,
+    currentPeriodIndex: 0,
+    balance: 100,
+    savingsByGoal: {},
+    selectedGoalId: null,
+    completedTasks: [],
+    isTestProfile: true,
+    demoMode: true,
+    createdAt: profile.createdAt,
+    onboarded: true,
+    periods: { 0: createPeriod(0, 100) },
+    ownedItemIds: [],
+    unlockedAchievementIds: [],
+    dailyStreak: 0,
+  };
+
+  assert.strictEqual(resetProf.currentPeriodIndex, 0, "Reset must return to period 0 (Day 1)");
+  assert.strictEqual(resetProf.balance, 100, "Reset must restore initial balance of 100 coins");
+  assert.strictEqual(resetProf.isTestProfile, true, "Reset must maintain test profile flag");
+  assert.strictEqual(resetProf.demoMode, true, "Reset must preserve demo mode for expert evaluation");
+  assert.strictEqual(Object.keys(resetProf.savingsByGoal).length, 0, "Savings must be empty");
+  assert.strictEqual(resetProf.completedTasks.length, 0, "Tasks must be reset");
+  assert.strictEqual(resetProf.ownedItemIds?.length, 0, "Owned items must be reset");
+  assert.strictEqual(resetProf.pet.growthStage, "baby", "Pet must reset to baby stage");
+});
+
 

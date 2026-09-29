@@ -24,6 +24,7 @@ const introSteps = [
 export default function Onboarding() {
   const router = useRouter();
   const profile = useStore((s) => s.profile);
+  const initTestProfile = useStore((s) => s.initTestProfile);
   const isOnboarded = !!profile?.onboarded;
   const { width: windowWidth } = useWindowDimensions();
   const bottomBgHeight = Math.round(windowWidth * (724 / 2172));
@@ -48,11 +49,13 @@ export default function Onboarding() {
         )}
 
         <View style={styles.heroSection}>
-          <Image
-            source={require("../../assets/images/wellcome_cat.png")}
-            style={styles.heroCatImage}
-            resizeMode="contain"
-          />
+          <View style={styles.heroLogoWrap}>
+            <Image
+              source={require("../../assets/images/logo.png")}
+              style={styles.heroLogoImage}
+              resizeMode="cover"
+            />
+          </View>
           <Text style={styles.title}>Питомец Финни 🐾</Text>
           <Text style={styles.subtitle}>
             Заботься о верном пушистом друге и учись легко управлять своими монетками!
@@ -88,6 +91,19 @@ export default function Onboarding() {
           </Text>
           <Text style={styles.arrowIcon}>→</Text>
         </Pressable>
+
+        <Pressable
+          style={styles.demoButton}
+          onPress={() => {
+            initTestProfile();
+            router.replace("/home");
+          }}
+          accessibilityLabel="Запустить демонстрационный режим"
+        >
+          <Text style={styles.demoButtonText}>
+            🧪 Войти с готовым демо-профилем ➔
+          </Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
@@ -109,10 +125,23 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 48 },
-  heroCatImage: {
-    width: 220,
-    height: 165,
-    marginBottom: spacing.xs,
+  heroLogoWrap: {
+    width: 170,
+    height: 170,
+    borderRadius: 40,
+    overflow: "hidden",
+    borderWidth: 3.5,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: spacing.sm,
+  },
+  heroLogoImage: {
+    width: "100%",
+    height: "100%",
   },
   heroSection: { alignItems: "center", marginVertical: spacing.sm },
   title: { fontSize: fonts.title, fontWeight: "800", color: colors.text, textAlign: "center" },
@@ -181,5 +210,21 @@ const styles = StyleSheet.create({
     fontSize: fonts.body,
     fontWeight: "700",
     color: colors.primaryDark,
+  },
+  demoButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: radius.pill,
+    minHeight: 46,
+    borderWidth: 1.5,
+    borderColor: "#D1D5DB",
+    marginTop: spacing.xs,
+  },
+  demoButtonText: {
+    color: colors.textMuted,
+    fontSize: fonts.small,
+    fontWeight: "700",
   },
 });

@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -41,7 +42,13 @@ export default function Terms() {
           style={styles.rulesCard}
           onPress={() => router.push("/onboarding")}
         >
-          <Text style={{ fontSize: 26 }}>💡</Text>
+          <View style={styles.rulesLogoWrap}>
+            <Image
+              source={require("../../assets/images/logo.png")}
+              style={styles.rulesLogo}
+              resizeMode="cover"
+            />
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.rulesTitle}>3 правила управления монетками</Text>
             <Text style={styles.rulesSub}>
@@ -184,6 +191,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.primary,
     gap: 12,
+  },
+  rulesLogoWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: colors.primaryLight,
+  },
+  rulesLogo: {
+    width: "100%",
+    height: "100%",
   },
   rulesTitle: {
     fontSize: fonts.body,

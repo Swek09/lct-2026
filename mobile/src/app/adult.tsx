@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -94,7 +95,7 @@ export default function Adult() {
   const confirmReset = () => {
     Alert.alert(
       "Сбросить тестовый профиль?",
-      "Профиль будет возвращен к исходному состоянию (100 монет, 1-й период) для повторного прохождения сценария проверки.",
+      "Профиль будет возвращен к исходному состоянию (100 монет, 1-й период) для повторного прохождения игры.",
       [
         { text: "Отмена", style: "cancel" },
         {
@@ -145,8 +146,14 @@ export default function Adult() {
       {!unlocked ? (
         /* Math Barrier Screen */
         <View style={styles.gateContainer}>
-          <Text style={styles.gateIcon}>🔒</Text>
-          <Text style={styles.gateTitle}>Вход для взрослых</Text>
+          <View style={styles.gateLogoWrap}>
+            <Image
+              source={require("../../assets/images/logo.png")}
+              style={styles.gateLogoImage}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={styles.gateTitle}>Вход для взрослых 🔒</Text>
           <Text style={styles.gateDesc}>
             Решите простой арифметический пример, чтобы подтвердить возраст:
           </Text>
@@ -345,11 +352,11 @@ export default function Adult() {
             </View>
           </View>
 
-          {/* Accessibility & Sound Settings (ТЗ 3.6) */}
+          {/* Accessibility & Sound Settings */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>🔊 Звуки и анимации (ТЗ 3.6)</Text>
+            <Text style={styles.cardTitle}>🔊 Звуки и анимации</Text>
             <Text style={styles.cardText}>
-              По требованиям ТЗ звуки и анимации можно отключить; критически важная информация не передается только звуком.
+              Звуковые эффекты и праздничные анимации можно настроить для комфортной игры; важная информация всегда дублируется на экране.
             </Text>
 
             <View style={styles.toggleRow}>
@@ -393,14 +400,14 @@ export default function Adult() {
             </View>
           </View>
 
-          {/* Demo Mode & Test Profile Controls (ТЗ Приложение А, шаг 12) */}
+          {/* Demo Mode & Test Profile Controls */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>🧪 Режим проверки экспертами</Text>
+            <Text style={styles.cardTitle}>🧪 Демонстрационный режим</Text>
             <View style={styles.toggleRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.toggleLabel}>Демонстрационный режим</Text>
+                <Text style={styles.toggleLabel}>Быстрое прохождение</Text>
                 <Text style={styles.toggleDesc}>
-                  Открывает не менее 5 последовательных игровых периодов без ожидания реального времени и все уроки сразу
+                  Открывает последовательные игровые периоды без ожидания реального времени и все уроки сразу
                 </Text>
               </View>
               <Pressable
@@ -418,7 +425,7 @@ export default function Adult() {
 
             <View style={{ gap: 10, marginTop: 12 }}>
               <DuoButton
-                title="Сбросить тестовый профиль для жюри (Шаг 1 сценария) ↺"
+                title="Сбросить тестовый профиль к началу ↺"
                 variant="secondary"
                 size="md"
                 onPress={confirmReset}
@@ -430,6 +437,27 @@ export default function Adult() {
                 onPress={confirmDelete}
               />
             </View>
+          </View>
+
+          {/* About App Card with Official Logo */}
+          <View style={[styles.card, styles.aboutCard]}>
+            <View style={styles.aboutRow}>
+              <View style={styles.aboutLogoWrap}>
+                <Image
+                  source={require("../../assets/images/logo.png")}
+                  style={styles.aboutLogo}
+                  resizeMode="cover"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.aboutTitle}>Питомец Финни 🐾</Text>
+                <Text style={styles.aboutVersion}>Версия 1.0.0 (Build 1)</Text>
+                <Text style={styles.aboutSub}>Конкурсный проект • LCT-2026</Text>
+              </View>
+            </View>
+            <Text style={styles.aboutDesc}>
+              Официальное решение задачи №25 Департамента финансов города Москвы. Безопасная развивающая среда для детей 7–11 лет: офлайн, без рекламы, без реальных платежей.
+            </Text>
           </View>
         </ScrollView>
       )}
@@ -724,5 +752,72 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: colors.textMuted,
     marginVertical: 2,
+  },
+  /* Gate Logo */
+  gateLogoWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 26,
+    overflow: "hidden",
+    borderWidth: 2.5,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 4,
+    marginBottom: spacing.xs,
+  },
+  gateLogoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  /* About Card */
+  aboutCard: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E2E8F0",
+    marginTop: spacing.xs,
+  },
+  aboutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 8,
+  },
+  aboutLogoWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "#E2E8F0",
+  },
+  aboutLogo: {
+    width: "100%",
+    height: "100%",
+  },
+  aboutTitle: {
+    fontSize: fonts.body,
+    fontWeight: "800",
+    color: colors.text,
+  },
+  aboutVersion: {
+    fontSize: fonts.caption,
+    fontWeight: "700",
+    color: colors.primaryDark,
+    marginTop: 1,
+  },
+  aboutSub: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  aboutDesc: {
+    fontSize: fonts.caption,
+    color: colors.textMuted,
+    lineHeight: 18,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+    paddingTop: 8,
   },
 });

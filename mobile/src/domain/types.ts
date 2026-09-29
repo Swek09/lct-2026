@@ -20,6 +20,7 @@ export interface PetCustomization {
   accessoryIndex: number;
   speciesId?: string;
   colorId?: string;
+  hatId?: string;
   eyeId?: string;
   outfitId?: string;
   accessoryId?: string;

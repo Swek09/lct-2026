@@ -1,5 +1,5 @@
 import React from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, fonts, radius } from "../theme";
 
 interface DiplomaModalProps {
@@ -119,7 +119,11 @@ export function DiplomaModal({
                   </View>
 
                   <View style={styles.sealWrap}>
-                    <Text style={styles.sealIcon}>🎖️</Text>
+                    <Image
+                      source={require("../../assets/images/logo.png")}
+                      style={styles.sealImage}
+                      resizeMode="cover"
+                    />
                     <Text style={styles.sealText}>Игровая печать Финни</Text>
                   </View>
                 </View>
@@ -345,6 +349,14 @@ const styles = StyleSheet.create({
   },
   sealWrap: {
     alignItems: "center",
+    gap: 4,
+  },
+  sealImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: "#D97706",
   },
   sealIcon: {
     fontSize: 28,

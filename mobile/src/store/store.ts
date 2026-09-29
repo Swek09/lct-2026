@@ -64,8 +64,13 @@ interface StoreState {
   feedSnackInteractive: (snackType: "apple" | "meal") => { ok: boolean; message: string };
   completeDailyQuest: (questId: string, answerKey: string) => { success: boolean; reward: number; explanation: string };
   toggleDemoMode: () => void;
+  setDemoMode: (enabled: boolean) => void;
+  initTestProfile: () => void;
   resetProfile: () => void;
   deleteProfile: () => void;
+  grantCoins: (amount: number) => void;
+  setPetGrowthStage: (stage: GrowthStage) => void;
+  healPet: () => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -460,23 +465,83 @@ export const useStore = create<StoreState>()(
         }
       },
 
+      initTestProfile: () => {
+        const pet = createPet("finni", "Листик", {
+          speciesIndex: 0,
+          paletteIndex: 0,
+          accessoryIndex: 0,
+          speciesId: "cat",
+          colorId: "ginger",
+          eyeId: "green",
+          outfitId: "hoodie",
+          accessoryId: "bowtie",
+        });
+        const firstIncome = START_BUDGET;
+        const profile: Profile = {
+          id: uid(),
+          childName: "Листик",
+          pet,
+          currentPeriodIndex: 0,
+          balance: firstIncome,
+          savingsByGoal: {},
+          selectedGoalId: null,
+          completedTasks: [],
+          isTestProfile: true,
+          demoMode: true,
+          createdAt: Date.now(),
+          onboarded: true,
+          periods: { 0: createPeriod(0, firstIncome) },
+          ownedItemIds: [],
+          unlockedAchievementIds: [],
+          dailyStreak: 0,
+          customGoals: [],
+        };
+        set({
+          profile,
+          lastFeedback: ["Демонстрационный профиль инициализирован."],
+        });
+      },
+
       resetProfile: () => {
         const { profile } = get();
-        if (!profile) return;
-        const pet = createPet("finni", profile.pet.name, profile.pet.customization);
+        const petName = profile?.pet?.name || "Листик";
+        const customization = profile?.pet?.customization || {
+          speciesIndex: 0,
+          paletteIndex: 0,
+          accessoryIndex: 0,
+          speciesId: "cat",
+          colorId: "ginger",
+          eyeId: "green",
+          outfitId: "hoodie",
+          accessoryId: "bowtie",
+        };
+        const pet = createPet("finni", petName, customization);
         const firstIncome = START_BUDGET;
+        const newProfile: Profile = {
+          id: profile?.id || uid(),
+          childName: petName,
+          pet,
+          currentPeriodIndex: 0,
+          balance: firstIncome,
+          savingsByGoal: {},
+          selectedGoalId: null,
+          completedTasks: [],
+          isTestProfile: true,
+          demoMode: true,
+          createdAt: profile?.createdAt || Date.now(),
+          onboarded: true,
+          periods: { 0: createPeriod(0, firstIncome) },
+          ownedItemIds: [],
+          unlockedAchievementIds: [],
+          dailyStreak: 0,
+          lastDailyBonusDate: undefined,
+          lastDailyBonusPeriod: undefined,
+          dailyQuestCompletedDate: undefined,
+          dailyQuestCompletedPeriod: undefined,
+          customGoals: [],
+        };
         set({
-          profile: {
-            ...profile,
-            pet,
-            balance: firstIncome,
-            savingsByGoal: {},
-            selectedGoalId: null,
-            completedTasks: [],
-            currentPeriodIndex: 0,
-            periods: { 0: createPeriod(0, firstIncome) },
-            isTestProfile: true,
-          },
+          profile: newProfile,
           lastFeedback: ["Тестовый профиль сброшен к исходному состоянию."],
         });
       },
@@ -484,11 +549,60 @@ export const useStore = create<StoreState>()(
       toggleDemoMode: () => {
         const { profile } = get();
         if (!profile) return;
+        const nextDemo = !profile.demoMode;
         set({
-          profile: { ...profile, demoMode: !profile.demoMode },
+          profile: { ...profile, demoMode: nextDemo },
           lastFeedback: [
-            `Демо-режим ${profile.demoMode ? "выключен" : "включён"}.`,
+            `Демо-режим ${nextDemo ? "включён" : "выключен"}.`,
           ],
+        });
+      },
+
+      setDemoMode: (enabled: boolean) => {
+        const { profile } = get();
+        if (!profile) return;
+        set({
+          profile: { ...profile, demoMode: enabled },
+          lastFeedback: [
+            `Демо-режим ${enabled ? "включён" : "выключен"}.`,
+          ],
+        });
+      },
+
+      grantCoins: (amount: number) => {
+        const { profile } = get();
+        if (!profile) return;
+        const newBalance = Math.max(0, profile.balance + amount);
+        set({
+          profile: { ...profile, balance: newBalance },
+          lastFeedback: [`Начислено: ${amount >= 0 ? "+" : ""}${amount} монет 🪙`],
+        });
+      },
+
+      setPetGrowthStage: (stage: GrowthStage) => {
+        const { profile } = get();
+        if (!profile) return;
+        const newPet = {
+          ...profile.pet,
+          growthStage: stage,
+          stageProgress: stage === "adult" ? 100 : stage === "teen" ? 50 : 0,
+        };
+        set({
+          profile: { ...profile, pet: newPet },
+          lastFeedback: [`Стадия питомца установлена: ${stage}.`],
+        });
+      },
+
+      healPet: () => {
+        const { profile } = get();
+        if (!profile) return;
+        const newPet = {
+          ...profile.pet,
+          state: { mood: 100, satiety: 100 },
+        };
+        set({
+          profile: { ...profile, pet: newPet },
+          lastFeedback: ["Показатели питомца восстановлены до 100%."],
         });
       },
 

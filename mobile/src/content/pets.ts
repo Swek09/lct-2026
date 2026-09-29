@@ -15,6 +15,16 @@ export interface PetPalette {
   name: string;
 }
 
+export interface PetHat {
+  id: string;
+  name: string;
+  modelFile: string;
+  emoji: string;
+  yOffset?: number;
+  zOffset?: number;
+  scale?: number;
+}
+
 export interface PetEye {
   id: string;
   name: string;
@@ -46,95 +56,24 @@ export const petSpecies: PetSpecies[] = [
     emoji: "🐱",
     color: "#5E9362",
   },
-  {
-    id: "dog",
-    name: "Щенок",
-    skills: "Дружба, Забота",
-    emoji: "🐶",
-    color: "#F38F69",
-  },
-  {
-    id: "rabbit",
-    name: "Кролик",
-    skills: "Энергия, Внимание",
-    emoji: "🐰",
-    color: "#E8C5A0",
-  },
-  {
-    id: "dragon",
-    name: "Дракончик",
-    skills: "Мудрость, Интуиция",
-    emoji: "🐲",
-    color: "#88B1CE",
-  },
 ];
 
 export const petPalettes: PetPalette[] = [
-  { id: "green", name: "Шалфей", color: "#6DA374" },
-  { id: "coral", name: "Персик", color: "#F38F69" },
-  { id: "sand", name: "Песочный", color: "#E8C5A0" },
-  { id: "blue", name: "Небесный", color: "#88B1CE" },
+  { id: "gray", name: "Серый", color: "#545A68" },
+  { id: "ginger", name: "Рыжий", color: "#E57338" },
+  { id: "white", name: "Белый", color: "#D8DFE8" },
 ];
 
-export const petEyes: PetEye[] = [
-  {
-    id: "green",
-    name: "Изумрудные",
-    color: "#4CAF50",
-    emoji: "🟢",
-  },
-  {
-    id: "brown",
-    name: "Карие",
-    color: "#8D6E63",
-    emoji: "🟤",
-  },
-  {
-    id: "blue",
-    name: "Голубые",
-    color: "#42A5F5",
-    emoji: "🔵",
-  },
+export const petHats: PetHat[] = [
+  { id: "none", name: "Без шляпы", emoji: "❌", modelFile: "" },
+  { id: "birthday", name: "Колпак", emoji: "🥳", modelFile: "BirthdayHat.glb", yOffset: -0.2297 },
+  { id: "cowboy", name: "Ковбойская", emoji: "🤠", modelFile: "CowboyHat.glb", yOffset: -0.2297, zOffset: 0 },
+  { id: "magic", name: "Волшебная", emoji: "🎩", modelFile: "MagicHat.glb", yOffset: -0.2297 },
 ];
 
-export const petOutfits: PetOutfit[] = [
-  {
-    id: "hoodie",
-    name: "Худи с листиками",
-    emoji: "🧥",
-  },
-  {
-    id: "jacket",
-    name: "Тёплая куртка",
-    emoji: "🦺",
-  },
-  {
-    id: "cape",
-    name: "Лесной плащ",
-    emoji: "🦸",
-  },
-];
-
-export const petAccessories: PetAccessory[] = [
-  {
-    id: "scarf",
-    name: "Шарфик",
-    symbol: "🧣",
-    emoji: "🧣",
-  },
-  {
-    id: "bowtie",
-    name: "Бабочка",
-    symbol: "🎀",
-    emoji: "🎀",
-  },
-  {
-    id: "glasses",
-    name: "Очки",
-    symbol: "👓",
-    emoji: "👓",
-  },
-];
+export const petEyes: PetEye[] = [];
+export const petOutfits: PetOutfit[] = [];
+export const petAccessories: PetAccessory[] = [];
 
 export { growthStageOrder, initialPetState } from "../domain/pet";
 
@@ -146,5 +85,5 @@ export const growthStageLabels: Record<GrowthStage, string> = {
 };
 
 export function countPetCombinations(): number {
-  return petSpecies.length * petPalettes.length * petEyes.length * petOutfits.length * petAccessories.length;
+  return petSpecies.length * petPalettes.length * petHats.length;
 }

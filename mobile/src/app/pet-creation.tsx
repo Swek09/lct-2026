@@ -11,13 +11,7 @@ import {
 } from "react-native";
 import { Cat3DViewer } from "../components/Cat3DViewer";
 import { Stepper } from "../components/Stepper";
-import {
-  petAccessories,
-  petEyes,
-  petOutfits,
-  petPalettes,
-  petSpecies,
-} from "../content/pets";
+import { petHats, petPalettes, petSpecies } from "../content/pets";
 import { useStore } from "../store/store";
 import { colors, fonts, radius, spacing } from "../theme";
 import { playClickSound } from "../utils/sound";
@@ -27,31 +21,30 @@ export default function PetCreation() {
   const createProfile = useStore((s) => s.createProfile);
   const completeOnboarding = useStore((s) => s.completeOnboarding);
 
-  // Step state: 1, 2, or 3
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Step state: 1 (Customize) or 2 (Pet Ready)
+  const [step, setStep] = useState<1 | 2>(1);
 
-  // Customization state
-  const [selectedSpeciesId, setSelectedSpeciesId] = useState("cat");
+  // Customization state - single character: Cat
   const [petName, setPetName] = useState("Финни");
-  const [selectedColorId, setSelectedColorId] = useState("green");
-  const [selectedEyeId, setSelectedEyeId] = useState("green");
-  const [selectedOutfitId, setSelectedOutfitId] = useState("hoodie");
-  const [selectedAccessoryId, setSelectedAccessoryId] = useState("bowtie");
+  const [selectedColorId, setSelectedColorId] = useState("gray");
+  const [selectedHatId, setSelectedHatId] = useState("birthday");
 
-  const currentSpecies =
-    petSpecies.find((s) => s.id === selectedSpeciesId) ?? petSpecies[0];
+  const currentSpecies = petSpecies[0] ?? {
+    id: "cat",
+    name: "Котик",
+    skills: "Забота, Накопления",
+    emoji: "🐱",
+    color: "#5E9362",
+  };
 
-  const speciesIndex = Math.max(
-    0,
-    petSpecies.findIndex((s) => s.id === selectedSpeciesId)
-  );
+  const currentColor =
+    petPalettes.find((p) => p.id === selectedColorId) ?? petPalettes[0];
+  const currentHat =
+    petHats.find((h) => h.id === selectedHatId) ?? petHats[0];
+
   const paletteIndex = Math.max(
     0,
     petPalettes.findIndex((p) => p.id === selectedColorId)
-  );
-  const accessoryIndex = Math.max(
-    0,
-    petAccessories.findIndex((a) => a.id === selectedAccessoryId)
   );
 
   const handleFinish = () => {
@@ -61,14 +54,12 @@ export default function PetCreation() {
       childName: finalName,
       petName: finalName,
       customization: {
-        speciesIndex,
+        speciesIndex: 0,
         paletteIndex,
-        accessoryIndex,
-        speciesId: selectedSpeciesId,
+        accessoryIndex: 0,
+        speciesId: "cat",
         colorId: selectedColorId,
-        eyeId: selectedEyeId,
-        outfitId: selectedOutfitId,
-        accessoryId: selectedAccessoryId,
+        hatId: selectedHatId,
       },
       demoMode: false,
     });
@@ -83,95 +74,24 @@ export default function PetCreation() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* ================= START 1: ВЫБЕРИ ПИТОМЦА ================= */}
+        {/* ================= STEP 1: СОЗДАЙ ПИТОМЦА ================= */}
         {step === 1 && (
-          <View style={styles.stepContainer}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Выбери питомца</Text>
-              <Text style={styles.subtitle}>
-                С кем ты отправишься в увлекательное путешествие?
-              </Text>
-            </View>
-
-            <Stepper currentStep={1} />
-
-            {/* 2x2 Grid matching Start 1 */}
-            <View style={styles.gridContainer}>
-              {petSpecies.map((species) => {
-                const isSelected = selectedSpeciesId === species.id;
-                return (
-                  <Pressable
-                    key={species.id}
-                    style={[
-                      styles.petGridCard,
-                      isSelected
-                        ? styles.petGridCardSelected
-                        : styles.petGridCardUnselected,
-                    ]}
-                    onPress={() => {
-                      playClickSound();
-                      setSelectedSpeciesId(species.id);
-                    }}
-                  >
-                    {isSelected && (
-                      <View style={styles.checkBadge}>
-                        <Text style={styles.checkBadgeText}>✓</Text>
-                      </View>
-                    )}
-                    <View
-                      style={[
-                        styles.speciesEmojiCircle,
-                        { backgroundColor: `${species.color}20` },
-                      ]}
-                    >
-                      <Text style={styles.speciesEmojiText}>{species.emoji}</Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.petGridName,
-                        isSelected && styles.petGridNameSelected,
-                      ]}
-                    >
-                      {species.name}
-                    </Text>
-                    <Text style={styles.petGridSkills}>{species.skills}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Bottom Button matching Start 1 */}
-            <Pressable
-              style={styles.fullPillButton}
-              onPress={() => {
-                playClickSound();
-                setStep(2);
-              }}
-            >
-              <Text style={styles.fullPillButtonText}>Далее</Text>
-              <Text style={styles.arrowIcon}>→</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* ================= START 2: СОЗДАЙ ПИТОМЦА ================= */}
-        {step === 2 && (
           <View style={styles.stepContainer}>
             <View style={styles.header}>
               <Text style={styles.title}>Создай питомца</Text>
               <Text style={styles.subtitle}>
-                Придумай классное имя и подбери наряд по вкусу!
+                Придумай классное имя, выбери окрас и любимую шляпу!
               </Text>
             </View>
 
-            <Stepper currentStep={2} />
+            <Stepper currentStep={1} totalSteps={2} />
 
-            {/* Top Side-by-Side Section matching Start 2 wireframe */}
+            {/* Top Side-by-Side Section */}
             <View style={styles.topSideBySideRow}>
-              {/* Left Column: Interactive 3D Pet Preview */}
+              {/* Left Column: Interactive 3D Cat Preview */}
               <View style={styles.leftPreviewCard}>
                 <Cat3DViewer
-                  height={170}
+                  height={176}
                   cameraDistance={4.2}
                   cameraY={0.9}
                   cameraLookAtY={0.5}
@@ -179,6 +99,8 @@ export default function PetCreation() {
                   animation="Idle_Default"
                   interactive={true}
                   showRug={true}
+                  colorId={selectedColorId}
+                  hatId={selectedHatId}
                 />
               </View>
 
@@ -199,9 +121,12 @@ export default function PetCreation() {
                   </View>
                 </View>
 
-                {/* 2. Color Card */}
+                {/* 2. Color / Coat Card */}
                 <View style={styles.miniCard}>
-                  <Text style={styles.miniCardTitle}>Цвет</Text>
+                  <View style={styles.coatTitleRow}>
+                    <Text style={styles.miniCardTitle}>Окрас:</Text>
+                    <Text style={styles.coatCurrentName}>{currentColor.name}</Text>
+                  </View>
                   <View style={styles.colorPaletteRow}>
                     {petPalettes.map((palette) => {
                       const isSelected = selectedColorId === palette.id;
@@ -237,25 +162,27 @@ export default function PetCreation() {
               </View>
             </View>
 
-            {/* Lower Options: 3 Group Containers */}
-            {/* Group 1: Eyes */}
+            {/* Hat Selection Section */}
             <View style={styles.optionGroupCard}>
-              <Text style={styles.groupLabel}>Глазки</Text>
-              <View style={styles.groupRow}>
-                {petEyes.map((eye) => {
-                  const isSelected = selectedEyeId === eye.id;
+              <View style={styles.hatHeaderRow}>
+                <Text style={styles.groupLabel}>Головной убор</Text>
+                <Text style={styles.hatSubLabel}>Модели 3D шляп</Text>
+              </View>
+              <View style={styles.hatGridRow}>
+                {petHats.map((hat) => {
+                  const isSelected = selectedHatId === hat.id;
                   return (
                     <Pressable
-                      key={eye.id}
+                      key={hat.id}
                       style={[
-                        styles.groupOptionPill,
+                        styles.hatCard,
                         isSelected
-                          ? styles.groupOptionSelected
-                          : styles.groupOptionUnselected,
+                          ? styles.hatCardSelected
+                          : styles.hatCardUnselected,
                       ]}
                       onPress={() => {
                         playClickSound();
-                        setSelectedEyeId(eye.id);
+                        setSelectedHatId(hat.id);
                       }}
                     >
                       {isSelected && (
@@ -263,14 +190,15 @@ export default function PetCreation() {
                           <Text style={styles.groupCheckText}>✓</Text>
                         </View>
                       )}
-                      <View style={[styles.eyeDot, { backgroundColor: eye.color }]} />
+                      <Text style={styles.hatEmoji}>{hat.emoji}</Text>
                       <Text
                         style={[
-                          styles.groupOptionText,
-                          isSelected && styles.groupOptionTextSelected,
+                          styles.hatNameText,
+                          isSelected && styles.hatNameTextSelected,
                         ]}
+                        numberOfLines={1}
                       >
-                        {eye.name}
+                        {hat.name}
                       </Text>
                     </Pressable>
                   );
@@ -278,93 +206,13 @@ export default function PetCreation() {
               </View>
             </View>
 
-            {/* Group 2: Clothes */}
-            <View style={styles.optionGroupCard}>
-              <Text style={styles.groupLabel}>Одежда</Text>
-              <View style={styles.groupRow}>
-                {petOutfits.map((outfit) => {
-                  const isSelected = selectedOutfitId === outfit.id;
-                  return (
-                    <Pressable
-                      key={outfit.id}
-                      style={[
-                        styles.groupOptionItem,
-                        isSelected
-                          ? styles.groupOptionSelected
-                          : styles.groupOptionUnselected,
-                      ]}
-                      onPress={() => {
-                        playClickSound();
-                        setSelectedOutfitId(outfit.id);
-                      }}
-                    >
-                      {isSelected && (
-                        <View style={styles.groupCheckBadge}>
-                          <Text style={styles.groupCheckText}>✓</Text>
-                        </View>
-                      )}
-                      <Text style={styles.groupOptionEmoji}>{outfit.emoji}</Text>
-                      <Text
-                        style={[
-                          styles.groupOptionText,
-                          isSelected && styles.groupOptionTextSelected,
-                        ]}
-                      >
-                        {outfit.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Group 3: Accessories */}
-            <View style={styles.optionGroupCard}>
-              <Text style={styles.groupLabel}>Аксессуар</Text>
-              <View style={styles.groupRow}>
-                {petAccessories.map((acc) => {
-                  const isSelected = selectedAccessoryId === acc.id;
-                  return (
-                    <Pressable
-                      key={acc.id}
-                      style={[
-                        styles.groupOptionItem,
-                        isSelected
-                          ? styles.groupOptionSelected
-                          : styles.groupOptionUnselected,
-                      ]}
-                      onPress={() => {
-                        playClickSound();
-                        setSelectedAccessoryId(acc.id);
-                      }}
-                    >
-                      {isSelected && (
-                        <View style={styles.groupCheckBadge}>
-                          <Text style={styles.groupCheckText}>✓</Text>
-                        </View>
-                      )}
-                      <Text style={styles.groupOptionEmoji}>{acc.symbol}</Text>
-                      <Text
-                        style={[
-                          styles.groupOptionText,
-                          isSelected && styles.groupOptionTextSelected,
-                        ]}
-                      >
-                        {acc.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Navigation Buttons matching Start 2 */}
+            {/* Navigation Buttons: Back & Forward */}
             <View style={styles.dualNavRow}>
               <Pressable
                 style={styles.secondaryPillButton}
                 onPress={() => {
                   playClickSound();
-                  setStep(1);
+                  router.back();
                 }}
               >
                 <Text style={styles.secondaryPillArrow}>←</Text>
@@ -375,7 +223,7 @@ export default function PetCreation() {
                 style={styles.primaryNavPillButton}
                 onPress={() => {
                   playClickSound();
-                  setStep(3);
+                  setStep(2);
                 }}
               >
                 <Text style={styles.fullPillButtonText}>Далее</Text>
@@ -385,17 +233,17 @@ export default function PetCreation() {
           </View>
         )}
 
-        {/* ================= START 3: ТВОЙ ПИТОМЕЦ ГОТОВ! ================= */}
-        {step === 3 && (
+        {/* ================= STEP 2: ТВОЙ ПИТОМЕЦ ГОТОВ! ================= */}
+        {step === 2 && (
           <View style={styles.stepContainer}>
             <View style={styles.header}>
               <Text style={styles.title}>Твой питомец готов! 🎉</Text>
               <Text style={styles.subtitle}>
-                Познакомься — твой верный друг уже ждёт тебя!
+                Познакомься — твой верный пушистый друг уже ждёт тебя!
               </Text>
             </View>
 
-            <Stepper currentStep={3} />
+            <Stepper currentStep={2} totalSteps={2} />
 
             {/* Ready Pet 3D Scene */}
             <View style={styles.heroSceneWrapper}>
@@ -408,6 +256,8 @@ export default function PetCreation() {
                 animation="Happy_Success"
                 interactive={true}
                 showRug={true}
+                colorId={selectedColorId}
+                hatId={selectedHatId}
               />
             </View>
 
@@ -422,8 +272,20 @@ export default function PetCreation() {
 
                 <View style={styles.summaryLine}>
                   <Text style={styles.summaryIcon}>🐱</Text>
-                  <Text style={styles.summaryLabel}>Тип:</Text>
+                  <Text style={styles.summaryLabel}>Персонаж:</Text>
                   <Text style={styles.summaryVal}>{currentSpecies.name}</Text>
+                </View>
+
+                <View style={styles.summaryLine}>
+                  <Text style={styles.summaryIcon}>🎨</Text>
+                  <Text style={styles.summaryLabel}>Окрас:</Text>
+                  <Text style={styles.summaryVal}>{currentColor.name}</Text>
+                </View>
+
+                <View style={styles.summaryLine}>
+                  <Text style={styles.summaryIcon}>{currentHat.emoji}</Text>
+                  <Text style={styles.summaryLabel}>Головной убор:</Text>
+                  <Text style={styles.summaryVal}>{currentHat.name}</Text>
                 </View>
 
                 <View style={styles.summaryLine}>
@@ -440,20 +302,19 @@ export default function PetCreation() {
               </View>
             </View>
 
-            {/* Start Adventure Button matching Start 3 */}
-            <Pressable
-              style={styles.fullPillButton}
-              onPress={handleFinish}
-            >
-              <Text style={styles.fullPillButtonText}>Начать приключение! 🐾</Text>
+            {/* Start Adventure Button */}
+            <Pressable style={styles.fullPillButton} onPress={handleFinish}>
+              <Text style={styles.fullPillButtonText}>
+                Начать приключение! 🐾
+              </Text>
             </Pressable>
 
-            {/* Edit link */}
+            {/* Edit link to return to Step 1 */}
             <Pressable
               style={styles.changeLink}
               onPress={() => {
                 playClickSound();
-                setStep(2);
+                setStep(1);
               }}
             >
               <Text style={styles.changeLinkText}>Изменить</Text>
@@ -501,77 +362,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  /* Start 1: Grid */
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginVertical: spacing.sm,
-    gap: spacing.sm,
-  },
-  petGridCard: {
-    width: "48%",
-    aspectRatio: 0.95,
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  petGridCardUnselected: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  petGridCardSelected: {
-    borderWidth: 2,
-    borderColor: colors.primary,
-    backgroundColor: colors.cardSelected,
-  },
-  checkBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-  },
-  checkBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
-  },
-  speciesEmojiCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  speciesEmojiText: {
-    fontSize: 34,
-  },
-  petGridName: {
-    fontSize: fonts.body,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  petGridNameSelected: {
-    color: colors.primaryDark,
-    fontWeight: "800",
-  },
-  petGridSkills: {
-    fontSize: 10,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: 2,
-  },
-
   /* Buttons */
   fullPillButton: {
     flexDirection: "row",
@@ -606,7 +396,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   secondaryPillButton: {
-    flex: 0.42,
+    flex: 0.4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -628,7 +418,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   primaryNavPillButton: {
-    flex: 0.55,
+    flex: 0.58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -642,12 +432,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  /* Start 2 Layout */
+  /* Top Section Side-by-Side */
   topSideBySideRow: {
     flexDirection: "row",
     gap: 8,
     marginVertical: 4,
-    height: 172,
+    height: 176,
   },
   leftPreviewCard: {
     flex: 1.1,
@@ -679,13 +469,24 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: 4,
   },
+  coatTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  coatCurrentName: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.primaryDark,
+  },
   miniInputWrap: {
     backgroundColor: colors.background,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
   miniTextInput: {
     fontSize: fonts.small,
@@ -695,25 +496,27 @@ const styles = StyleSheet.create({
   },
   colorPaletteRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     alignItems: "center",
     marginTop: 2,
   },
   paletteDotWrap: {
     padding: 2,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    borderRadius: 16,
+    borderWidth: 2,
     borderColor: "transparent",
   },
   paletteDotWrapSelected: {
     borderColor: colors.primary,
   },
   paletteDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
   },
   paletteCheckBadge: {
     width: 14,
@@ -729,71 +532,69 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
 
-  /* Options Groups */
+  /* Hat Selection Options */
   optionGroupCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: radius.lg,
     borderWidth: 1.5,
     borderColor: colors.border,
-    padding: 10,
-    gap: 6,
+    padding: 12,
+    gap: 8,
+    marginVertical: 4,
+  },
+  hatHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 2,
   },
   groupLabel: {
     fontSize: fonts.small,
-    fontWeight: "700",
-    color: colors.text,
-    marginLeft: 2,
-  },
-  groupRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  groupOptionPill: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    position: "relative",
-  },
-  eyeDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  groupOptionItem: {
-    flex: 1,
-    height: 60,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  groupOptionEmoji: {
-    fontSize: 22,
-  },
-  groupOptionText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  groupOptionTextSelected: {
-    color: colors.primaryDark,
     fontWeight: "800",
+    color: colors.text,
   },
-  groupOptionUnselected: {
+  hatSubLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: "600",
+  },
+  hatGridRow: {
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
+  },
+  hatCard: {
+    flex: 1,
+    height: 72,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    padding: 4,
+  },
+  hatCardUnselected: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1.5,
     borderColor: colors.border,
   },
-  groupOptionSelected: {
+  hatCardSelected: {
     backgroundColor: colors.cardSelected,
     borderWidth: 2,
     borderColor: colors.primary,
+  },
+  hatEmoji: {
+    fontSize: 26,
+    marginBottom: 3,
+  },
+  hatNameText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+  hatNameTextSelected: {
+    color: colors.primaryDark,
+    fontWeight: "800",
   },
   groupCheckBadge: {
     position: "absolute",
@@ -813,7 +614,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* Start 3: Hero Scene & Stats */
+  /* Step 2: Hero Scene & Stats */
   heroSceneWrapper: {
     width: "100%",
     height: 230,
@@ -845,7 +646,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   summaryIcon: {
-    fontSize: 14,
+    fontSize: 15,
   },
   summaryLabel: {
     fontSize: fonts.small,

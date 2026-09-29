@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -45,8 +45,11 @@ export default function Home() {
   } | null>(null);
   const [homeToast, setHomeToast] = useState<string | null>(null);
 
+  const dailyBonusPromptedRef = useRef(false);
+
   useEffect(() => {
-    if (profile && canClaimDailyBonus(profile)) {
+    if (profile && canClaimDailyBonus(profile) && !dailyBonusPromptedRef.current) {
+      dailyBonusPromptedRef.current = true;
       const timer = setTimeout(() => setShowDailyBonus(true), 600);
       return () => clearTimeout(timer);
     }
@@ -155,9 +158,9 @@ export default function Home() {
               accessibilityLabel="Перейти к питомцу"
             >
               <Image
-                source={require("../../assets/images/background_cat.png")}
+                source={require("../../assets/images/logo.png")}
                 style={styles.hudPetImage}
-                resizeMode="contain"
+                resizeMode="cover"
               />
               <View>
                 <View style={styles.hudPetNameRow}>
@@ -300,9 +303,9 @@ export default function Home() {
                   ]}
                 >
                   <Image
-                    source={require("../../assets/images/background_cat.png")}
+                    source={require("../../assets/images/logo.png")}
                     style={styles.petHeroImage}
-                    resizeMode="contain"
+                    resizeMode="cover"
                   />
                   <View style={styles.petHeroStatus}>
                     <Text style={styles.petHeroStatusText}>
@@ -755,6 +758,8 @@ const styles = StyleSheet.create({
   hudPetImage: {
     width: 44,
     height: 44,
+    borderRadius: 14,
+    overflow: "hidden",
   },
   hudPetNameRow: {
     flexDirection: "row",
@@ -1022,8 +1027,9 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.95 }],
   },
   petHeroImage: {
-    width: 88,
-    height: 66,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
   },
   petHeroStatus: {
     position: "absolute",
