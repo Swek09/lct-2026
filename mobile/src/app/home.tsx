@@ -624,7 +624,8 @@ export default function Home() {
           <Text style={styles.howToPlayArrow}>→</Text>
         </Pressable>
 
-        {/* ============ 6. PERIOD CARD ============ */}        {period && !period.completed && (
+        {/* ============ 6. PERIOD CARD ============ */}
+        {period && !period.completed && (
           <View style={styles.periodCard}>
             <View style={styles.periodTopRow}>
               <View style={styles.periodSunBadge}>
