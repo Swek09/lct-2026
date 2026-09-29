@@ -18,6 +18,7 @@ import { DuoButton } from "../components/DuoButton";
 import { NightTransitionModal } from "../components/NightTransitionModal";
 import { TopNavBar } from "../components/TopNavBar";
 import { goals } from "../content/goals";
+import { growthStageLabels } from "../content/pets";
 import { tasks, taskUnits } from "../content/tasks";
 import { canClaimDailyBonus, canDoDailyQuest } from "../domain/daily";
 import { canFinishPeriod, currentPeriod } from "../domain/period";
@@ -122,6 +123,16 @@ export default function Home() {
   /* Authentic Duolingo winding rhythm: right → center → left */
   const windOffsets = [0, 52, 52, 0, -52, -52];
 
+  /* Derived data for ТЗ 2.5.3 HUD Card */
+  const allGoals = [...(profile.customGoals ?? []), ...goals];
+  const activeGoalId = profile.selectedGoalId ?? allGoals[0]?.id;
+  const activeGoal = allGoals.find((g) => g.id === activeGoalId) ?? allGoals[0];
+  const savedInGoal = profile.savingsByGoal[activeGoal.id] ?? 0;
+  const goalPct = Math.min(100, Math.round((savedInGoal / (activeGoal.cost || 1)) * 100));
+
+  const activeTask = unitTasks.find((t) => !completedTaskIds.has(t.id)) ?? unitTasks[0];
+  const isActiveTaskDone = activeTask && completedTaskIds.has(activeTask.id);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <TopNavBar />
@@ -131,6 +142,92 @@ export default function Home() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* ============ HUD OVERVIEW CARD (ТЗ 2.5.3: Питомец + Баланс + Накопления + Цель + Состояние + Задание) ============ */}
+        <View style={styles.hudCard}>
+          <View style={styles.hudTopRow}>
+            {/* Pet info & vitals */}
+            <Pressable
+              style={styles.hudPetCol}
+              onPress={() => {
+                playClickSound();
+                router.push("/progress");
+              }}
+              accessibilityLabel="Перейти к питомцу"
+            >
+              <Image
+                source={require("../../assets/images/background_cat.png")}
+                style={styles.hudPetImage}
+                resizeMode="contain"
+              />
+              <View>
+                <View style={styles.hudPetNameRow}>
+                  <Text style={styles.hudPetName}>{profile.pet.name}</Text>
+                  <View style={styles.hudStageTag}>
+                    <Text style={styles.hudStageText}>{growthStageLabels[profile.pet.growthStage]}</Text>
+                  </View>
+                </View>
+                <View style={styles.hudVitalsRow}>
+                  <Text style={styles.hudVitalPill}>🥣 {profile.pet.state.satiety}%</Text>
+                  <Text style={styles.hudVitalPill}>😊 {profile.pet.state.mood}%</Text>
+                </View>
+              </View>
+            </Pressable>
+
+            {/* Balance badge */}
+            <View style={styles.hudBalanceBadge}>
+              <Text style={styles.hudBalanceLabel}>Кошелёк:</Text>
+              <Text style={styles.hudBalanceValue}>{profile.balance} 🪙</Text>
+            </View>
+          </View>
+
+          {/* Goal & Savings row */}
+          <Pressable
+            style={styles.hudGoalRow}
+            onPress={() => {
+              playClickSound();
+              router.push("/savings");
+            }}
+            accessibilityLabel="Перейти в копилку"
+          >
+            <View style={styles.hudGoalIconWrap}>
+              <Text style={{ fontSize: 20 }}>{activeGoal.icon}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.hudGoalTextRow}>
+                <Text style={styles.hudGoalName} numberOfLines={1}>Мечта: {activeGoal.name}</Text>
+                <Text style={styles.hudGoalAmount}>{savedInGoal} / {activeGoal.cost} 🪙</Text>
+              </View>
+              <View style={styles.hudGoalBarTrack}>
+                <View style={[styles.hudGoalBarFill, { width: `${goalPct}%` }]} />
+              </View>
+            </View>
+          </Pressable>
+
+          {/* Active task quick bar */}
+          {activeTask && (
+            <Pressable
+              style={styles.hudTaskBar}
+              onPress={() => {
+                playClickSound();
+                router.push(`/task/${activeTask.id}` as never);
+              }}
+              accessibilityLabel="Начать активное задание"
+            >
+              <Text style={styles.hudTaskBadge}>
+                {isActiveTaskDone ? "✓ Выполнено" : "Активное задание"}
+              </Text>
+              <Text style={styles.hudTaskTitle} numberOfLines={1}>
+                {activeTask.title}
+              </Text>
+              <View style={styles.hudTaskBtn}>
+                <Text style={styles.hudTaskBtnText}>
+                  {isActiveTaskDone ? "Повторить ➔" : "Начать ➔"}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+        </View>
+
         {/* ============ 1. UNIT HEADER ============ */}
         <View style={styles.unitSection}>
           {/* Segmented world switcher */}
@@ -625,6 +722,180 @@ const styles = StyleSheet.create({
   cardPressed: {
     transform: [{ translateY: 1 }],
     opacity: 0.92,
+  },
+
+  /* ---------- ТЗ 2.5.3 HUD Card ---------- */
+  hudCard: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: 14,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  hudTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  hudPetCol: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  hudPetImage: {
+    width: 44,
+    height: 44,
+  },
+  hudPetNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  hudPetName: {
+    fontSize: 15,
+    fontWeight: "900",
+    color: colors.text,
+  },
+  hudStageTag: {
+    backgroundColor: "#E8F5E9",
+    borderRadius: radius.pill,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderWidth: 1,
+    borderColor: "#A5D6A7",
+  },
+  hudStageText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#2E7D32",
+  },
+  hudVitalsRow: {
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 3,
+  },
+  hudVitalPill: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textMuted,
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  hudBalanceBadge: {
+    alignItems: "flex-end",
+    backgroundColor: "#FFFBEB",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#FDE68A",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  hudBalanceLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#92400E",
+    textTransform: "uppercase",
+  },
+  hudBalanceValue: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#B45309",
+  },
+  hudGoalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 9,
+  },
+  hudGoalIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hudGoalTextRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  hudGoalName: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: colors.text,
+    flex: 1,
+    marginRight: 6,
+  },
+  hudGoalAmount: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  hudGoalBarTrack: {
+    height: 6,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  hudGoalBarFill: {
+    height: "100%",
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+  },
+  hudTaskBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    gap: 8,
+  },
+  hudTaskBadge: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#166534",
+    backgroundColor: "#DCFCE7",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  hudTaskTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#14532D",
+    flex: 1,
+  },
+  hudTaskBtn: {
+    backgroundColor: "#16A34A",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  hudTaskBtnText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
 
   /* ---------- Unit section ---------- */

@@ -3,7 +3,7 @@ import type {
   GamePeriod,
   Profile,
 } from "./types";
-import { START_BUDGET, actualTotalSpent } from "./economy";
+import { START_BUDGET, planWasOnTrack } from "./economy";
 
 export function createPeriod(index: number, income: number): GamePeriod {
   return {
@@ -31,7 +31,7 @@ export function computeNextIncome(profile: Profile): number {
   const period = currentPeriod(profile);
   const base = START_BUDGET + profile.currentPeriodIndex * 5;
   if (!period || !period.completed) return base;
-  const onTrack = actualTotalSpent(period) <= period.income;
+  const onTrack = planWasOnTrack(period);
   return base + (onTrack ? 10 : 0);
 }
 

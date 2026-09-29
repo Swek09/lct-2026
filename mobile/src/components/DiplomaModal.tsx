@@ -50,14 +50,14 @@ export function DiplomaModal({
                 {/* Emblem */}
                 <View style={styles.emblemWrap}>
                   <Text style={styles.emblemIcon}>🏛️</Text>
-                  <Text style={styles.orgText}>ДЕПАРТАМЕНТ ФИНАНСОВ ГОРОДА МОСКВЫ</Text>
-                  <Text style={styles.subOrgText}>Программа финансовой грамотности для детей</Text>
+                  <Text style={styles.orgText}>ПРОГРАММА ФИНАНСОВОЙ ГРАМОТНОСТИ</Text>
+                  <Text style={styles.subOrgText}>Конкурсный проект «Финни» • Задача Департамента финансов Москвы</Text>
                 </View>
 
                 {/* Main Heading */}
                 <View style={styles.titleWrap}>
                   <Text style={styles.diplomaTitle}>ДИПЛОМ</Text>
-                  <Text style={styles.diplomaSubtitle}>ЮНОГО ФИНАНСИСТА МОСКВЫ</Text>
+                  <Text style={styles.diplomaSubtitle}>ЮНОГО ФИНАНСИСТА</Text>
                 </View>
 
                 {/* Recipient */}
@@ -102,7 +102,7 @@ export function DiplomaModal({
                     <Text style={styles.statLbl}>Заданий</Text>
                   </View>
                   <View style={styles.statBox}>
-                    <Text style={styles.statVal}>{savingsTotal} ₽</Text>
+                    <Text style={styles.statVal}>{savingsTotal} 🪙</Text>
                     <Text style={styles.statLbl}>Накоплено</Text>
                   </View>
                   <View style={styles.statBox}>
@@ -120,7 +120,7 @@ export function DiplomaModal({
 
                   <View style={styles.sealWrap}>
                     <Text style={styles.sealIcon}>🎖️</Text>
-                    <Text style={styles.sealText}>Официальная печать программы</Text>
+                    <Text style={styles.sealText}>Игровая печать Финни</Text>
                   </View>
                 </View>
               </View>

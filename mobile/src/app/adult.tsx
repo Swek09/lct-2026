@@ -220,9 +220,9 @@ export default function Adult() {
             <View style={styles.diplomaHeader}>
               <Text style={styles.diplomaHeaderIcon}>📜</Text>
               <View style={{ flex: 1 }}>
-                <Text style={styles.diplomaCardTitle}>Диплом юного финансиста Москвы</Text>
+                <Text style={styles.diplomaCardTitle}>Диплом юного финансиста</Text>
                 <Text style={styles.diplomaCardSub}>
-                  Официальный сертификат Департамента финансов г. Москвы
+                  Игровой сертификат за освоение финансовой грамотности
                 </Text>
               </View>
             </View>
@@ -418,7 +418,7 @@ export default function Adult() {
 
             <View style={{ gap: 10, marginTop: 12 }}>
               <DuoButton
-                title="Сбросить тестовый профиль ↺"
+                title="Сбросить тестовый профиль для жюри (Шаг 1 сценария) ↺"
                 variant="secondary"
                 size="md"
                 onPress={confirmReset}

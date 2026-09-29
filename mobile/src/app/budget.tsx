@@ -205,17 +205,42 @@ export default function Budget() {
             <View
               style={[
                 styles.balancePill,
-                remaining < 0 ? styles.balancePillDanger : styles.balancePillNormal,
+                remaining < 0
+                  ? styles.balancePillDanger
+                  : remaining > 0
+                  ? styles.balancePillReserve
+                  : styles.balancePillNormal,
               ]}
             >
-              <Text style={styles.balancePillLabel}>Осталось в кошельке:</Text>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.balancePillLabel}>
+                  {remaining < 0
+                    ? "Превышение бюджета:"
+                    : remaining > 0
+                    ? "💼 Резерв на непредвиденное:"
+                    : "✨ Все монетки распределены:"}
+                </Text>
+                {remaining > 0 && (
+                  <Text style={styles.balanceReserveHint}>
+                    Нераспределённый остаток останется в кошельке как подушка безопасности!
+                  </Text>
+                )}
+              </View>
               <Text
                 style={[
                   styles.balancePillValue,
                   remaining < 0 && { color: "#DC2626" },
+                  remaining > 0 && { color: "#2563EB" },
                 ]}
               >
                 {remaining} 🪙
+              </Text>
+            </View>
+
+            {/* Advisory 50/25/25 tip card */}
+            <View style={styles.advisoryTipCard}>
+              <Text style={styles.advisoryTipText}>
+                💡 <Text style={{ fontWeight: "800" }}>Подсказка от Финни:</Text> Популярный ориентир — около 50% на «Надо», 25% на «Хочу» и 25% в «Копилку». Но это лишь пример — распределяй так, как считаешь нужным!
               </Text>
             </View>
 
@@ -393,6 +418,28 @@ const styles = StyleSheet.create({
   balancePillDanger: {
     borderColor: "#EF4444",
     backgroundColor: "#FEF2F2",
+  },
+  balancePillReserve: {
+    borderColor: "#93C5FD",
+    backgroundColor: "#EFF6FF",
+  },
+  balanceReserveHint: {
+    fontSize: 11,
+    color: "#2563EB",
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  advisoryTipCard: {
+    backgroundColor: "#FFFBEB",
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: "#FDE68A",
+    padding: 12,
+  },
+  advisoryTipText: {
+    fontSize: 12,
+    color: "#78350F",
+    lineHeight: 17,
   },
   balancePillLabel: {
     fontSize: fonts.body,

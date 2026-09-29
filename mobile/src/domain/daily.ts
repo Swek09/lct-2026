@@ -9,13 +9,13 @@ export interface DailyReward {
 }
 
 export const DAILY_REWARDS: DailyReward[] = [
-  { day: 1, coins: 10, icon: "🪙", title: "День 1: Начало пути" },
-  { day: 2, coins: 15, icon: "💰", title: "День 2: Верный друг" },
-  { day: 3, coins: 20, icon: "🎁", title: "День 3: Приятный сюрприз" },
-  { day: 4, coins: 25, icon: "⭐", title: "День 4: Мудрый кошелёк" },
-  { day: 5, coins: 30, icon: "🍎", title: "День 5: Вкусный перекус" },
-  { day: 6, coins: 35, icon: "🏆", title: "День 6: Знаток сбережений" },
-  { day: 7, coins: 50, icon: "👑", title: "День 7: Золотой чемпион!", specialReward: "Корона Финни" },
+  { day: 1, coins: 2, icon: "🪙", title: "День 1: Начало пути" },
+  { day: 2, coins: 3, icon: "💰", title: "День 2: Верный друг" },
+  { day: 3, coins: 3, icon: "🎁", title: "День 3: Приятный сюрприз" },
+  { day: 4, coins: 4, icon: "⭐", title: "День 4: Мудрый кошелёк" },
+  { day: 5, coins: 5, icon: "🍎", title: "День 5: Вкусный перекус" },
+  { day: 6, coins: 5, icon: "🏆", title: "День 6: Знаток сбережений" },
+  { day: 7, coins: 10, icon: "👑", title: "День 7: Золотой чемпион!", specialReward: "Корона Финни" },
 ];
 
 export interface DailyQuest {

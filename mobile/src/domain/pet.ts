@@ -55,7 +55,7 @@ export function createPet(
     name,
     customization,
     state: { ...initialPetState },
-    growthStage: "egg",
+    growthStage: "baby",
     stageProgress: 0,
   };
 }

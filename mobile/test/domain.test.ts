@@ -313,8 +313,8 @@ test("Daily: canClaimDailyBonus, canDoDailyQuest, and 7-day reward structure", (
 
   // 7-day rewards escalation check
   assert.strictEqual(DAILY_REWARDS.length, 7);
-  assert.strictEqual(DAILY_REWARDS[0].coins, 10);
-  assert.strictEqual(DAILY_REWARDS[6].coins, 50);
+  assert.strictEqual(DAILY_REWARDS[0].coins, 2);
+  assert.strictEqual(DAILY_REWARDS[6].coins, 10);
 });
 
 test("Savings: deposit never exceeds goal cost and withdrawal supports arbitrary amounts up to saved", () => {
