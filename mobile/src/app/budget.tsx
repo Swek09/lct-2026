@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Pressable,
@@ -17,6 +18,7 @@ import { useStore } from "../store/store";
 import { colors, fonts, radius, spacing } from "../theme";
 
 export default function Budget() {
+  const router = useRouter();
   const profile = useStore((s) => s.profile);
   const setPlan = useStore((s) => s.setPlan);
 
@@ -242,6 +244,16 @@ export default function Budget() {
               <Text style={styles.advisoryTipText}>
                 💡 <Text style={{ fontWeight: "800" }}>Подсказка от Финни:</Text> Популярный ориентир — около 50% на «Надо», 25% на «Хочу» и 25% в «Копилку». Но это лишь пример — распределяй так, как считаешь нужным!
               </Text>
+              <Pressable
+                style={{ marginTop: 6, alignSelf: "flex-start" }}
+                onPress={() => router.push("/onboarding")}
+                accessibilityRole="button"
+                accessibilityLabel="Открыть подсказку о 3 типах решений"
+              >
+                <Text style={{ fontSize: 11, fontWeight: "800", color: "#2563EB", textDecorationLine: "underline" }}>
+                  📖 Вспомнить 3 типа решений (Надо / Хочу / Коплю) →
+                </Text>
+              </Pressable>
             </View>
 
             {/* Envelope 1: Mandatory */}

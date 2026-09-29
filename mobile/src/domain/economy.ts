@@ -64,26 +64,39 @@ export function actualTotalSpent(period: GamePeriod): number {
 }
 
 /**
- * ТЗ 2.5.10: оценка финансовой дисциплины за период из совокупности решений:
- * 1. Обязательные потребности питомца обеспечены (обед/уход куплен).
- * 2. Траты на желания не превысили лимит конверта «Хочу» (отказ от них только в плюс).
- * 3. Лимит обязательного конверта «Надо» не превышен.
- * 4. Запланированные накопления внесены в копилку (не менее 80% от плана).
- * 5. Суммарные расходы не превысили доступный доход периода.
+ * ТЗ 2.5.10: многофакторная оценка финансовой дисциплины за период из совокупности решений:
+ * 1. Обязательные базовые потребности питомца обеспечены (сытный обед куплен: petFed === true).
+ * 2. Лимит конверта «Надо» был изначально запланирован (>0) и фактически не превышен.
+ * 3. Траты на радости не превысили лимит конверта «Хочу» (отказ от них только в плюс).
+ * 4. Регулярность сбережений: взнос в копилку был запланирован (plan.savings > 0) и внесён (не менее 80% от плана).
+ * 5. Суммарные расходы и сбережения не превысили доступный доход периода (нет дефицита).
  */
 export function planWasOnTrack(period: GamePeriod): boolean {
   if (!period.plan || !period.planConfirmed) return false;
-  const actualMandatory = actualMandatoryExpenses(period);
-  const mandatoryOk = actualMandatory > 0;
 
+  // 1. Питомец накормлен (куплен сытный обед либо получена сытость)
+  const petFed = period.expenses.some(
+    (e) => e.itemId === "food_bowl" || (e.impact && e.impact.satiety >= 20),
+  );
+
+  // 2. Лимит конверта «Надо» запланирован (>0) и фактически не превышен
+  const actualMandatory = actualMandatoryExpenses(period);
+  const mandatoryLimitOk =
+    period.plan.mandatory > 0 && actualMandatory <= period.plan.mandatory;
+  const mandatoryOk = petFed && mandatoryLimitOk;
+
+  // 3. Траты на радости не превысили лимит конверта «Хочу»
   const actualOptional = actualOptionalExpenses(period);
   const optionalOk = actualOptional <= period.plan.optional;
-  const mandatoryLimitOk = actualMandatory <= Math.max(period.plan.mandatory, 20);
 
+  // 4. Регулярность сбережений: взнос запланирован (>0) и пополнен минимум на 80%
   const targetSavings = period.plan.savings;
-  const savingsOk = targetSavings === 0 || period.savingsAdded >= Math.floor(targetSavings * 0.8);
+  const savingsOk =
+    targetSavings > 0 && period.savingsAdded >= Math.floor(targetSavings * 0.8);
 
-  const notOverIncome = actualTotalSpent(period) + period.savingsAdded <= period.income;
+  // 5. Суммарные расходы и сбережения не превысили доход
+  const notOverIncome =
+    actualTotalSpent(period) + period.savingsAdded <= period.income;
 
-  return mandatoryOk && optionalOk && mandatoryLimitOk && savingsOk && notOverIncome;
+  return mandatoryOk && optionalOk && savingsOk && notOverIncome;
 }

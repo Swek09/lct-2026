@@ -217,6 +217,27 @@ export default function Shop() {
           <View style={styles.modalContent}>
             <Text style={styles.modalIcon}>{selectedItem?.icon ?? "🎁"}</Text>
             <Text style={styles.modalTitle}>{selectedItem?.name}</Text>
+            <View
+              style={[
+                styles.modalCategoryBadge,
+                selectedItem?.type === "mandatory"
+                  ? styles.modalCategoryMandatory
+                  : styles.modalCategoryOptional,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.modalCategoryText,
+                  selectedItem?.type === "mandatory"
+                    ? styles.modalCategoryTextMandatory
+                    : styles.modalCategoryTextOptional,
+                ]}
+              >
+                {selectedItem?.type === "mandatory"
+                  ? "🥣 Категория: НАДО (Обязательное)"
+                  : "🎮 Категория: ХОЧУ (Необязательное)"}
+              </Text>
+            </View>
             <Text style={styles.modalPrice}>Цена: {selectedItem?.price} монеток 🪙</Text>
 
             <View style={styles.modalImpactBox}>
@@ -495,6 +516,32 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.text,
     textAlign: "center",
+  },
+  modalCategoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  modalCategoryMandatory: {
+    backgroundColor: "#E8F5E9",
+    borderColor: "#A5D6A7",
+  },
+  modalCategoryOptional: {
+    backgroundColor: "#F3E8FF",
+    borderColor: "#D8B4FE",
+  },
+  modalCategoryText: {
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  modalCategoryTextMandatory: {
+    color: "#2E7D32",
+  },
+  modalCategoryTextOptional: {
+    color: "#7E22CE",
   },
   modalPrice: {
     fontSize: fonts.body,

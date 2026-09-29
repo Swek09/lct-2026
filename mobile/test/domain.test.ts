@@ -113,6 +113,30 @@ test("Pet: countSuccessfulPeriods counts only onTrack completed periods (ТЗ 2.
 
   // Overspending beyond plan (+10%) does not count: safe error, no growth
   assert.strictEqual(countSuccessfulPeriods(mkPeriods(true) as never), 0);
+
+  // Edge case 1: Planning 0 for savings (savingsOk is false)
+  const zeroSavings = mkPeriods(false);
+  zeroSavings.periods[0].plan!.savings = 0;
+  zeroSavings.periods[0].savingsAdded = 0;
+  assert.strictEqual(countSuccessfulPeriods(zeroSavings as never), 0);
+
+  // Edge case 2: Buying only water without a proper meal (petFed is false)
+  const onlyWater = mkPeriods(false);
+  onlyWater.periods[0].expenses[0] = {
+    id: "e_water",
+    itemId: "water",
+    type: "mandatory",
+    amount: 10,
+    timestamp: Date.now(),
+    impact: { mood: 0, satiety: 15 },
+  };
+  assert.strictEqual(countSuccessfulPeriods(onlyWater as never), 0);
+
+  // Edge case 3: Overspending mandatory envelope
+  const overspendMandatory = mkPeriods(false);
+  overspendMandatory.periods[0].plan!.mandatory = 20;
+  overspendMandatory.periods[0].expenses[0].amount = 40;
+  assert.strictEqual(countSuccessfulPeriods(overspendMandatory as never), 0);
 });
 
 test("Period: canFinishPeriod verifies plan and mandatory spend, respects demoMode (ТЗ 2.5.13)", () => {

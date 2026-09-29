@@ -159,7 +159,7 @@ export const tasks: Task[] = [
   },
   {
     id: "envelope_method",
-    theme: "budget",
+    theme: "payments",
     unitId: 2,
     unitTitle: "Три волшебных конверта",
     icon: "✉️",
@@ -322,7 +322,7 @@ export const tasks: Task[] = [
   /* ================= UNIT 5 ================= */
   {
     id: "unexpected_vet",
-    theme: "budget",
+    theme: "savings",
     unitId: 5,
     unitTitle: "Секретная заначка",
     icon: "🩺",

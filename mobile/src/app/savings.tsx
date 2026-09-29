@@ -56,9 +56,9 @@ export default function Savings() {
   const remaining = Math.max(0, currentGoal.cost - savedAmount);
   const percent = progressPercent(savedAmount, currentGoal.cost);
 
-  // Time estimate: assume avg deposit 15 coins per period
+  // Time estimate: assume avg deposit 15 coins per period (protect against division by 0)
   const avgDepositPerPeriod = 15;
-  const periodsLeft = Math.ceil(remaining / avgDepositPerPeriod);
+  const periodsLeft = avgDepositPerPeriod > 0 ? Math.ceil(remaining / avgDepositPerPeriod) : null;
 
   // Withdrawal calculations
   const parsedWithdraw = Math.max(
@@ -66,7 +66,9 @@ export default function Savings() {
     Math.min(savedAmount || 1, parseInt(withdrawAmountText, 10) || 1)
   );
   const remainingInPiggy = Math.max(0, savedAmount - parsedWithdraw);
-  const daysDelayed = Math.ceil(parsedWithdraw / avgDepositPerPeriod);
+  const daysDelayed = avgDepositPerPeriod > 0 ? Math.ceil(parsedWithdraw / avgDepositPerPeriod) : null;
+  const daysBefore = avgDepositPerPeriod > 0 ? Math.max(1, Math.ceil(remaining / avgDepositPerPeriod)) : null;
+  const daysAfter = avgDepositPerPeriod > 0 ? Math.max(1, Math.ceil((currentGoal.cost - remainingInPiggy) / avgDepositPerPeriod)) : null;
 
   const openWithdrawModal = () => {
     const init = Math.min(savedAmount, 10);
@@ -543,10 +545,25 @@ export default function Savings() {
             </View>
 
             <View style={styles.warningConsequenceBox}>
-              <Text style={styles.consequenceText}>
-                ⚠️ В копилке останется: <Text style={{ fontWeight: "800" }}>{remainingInPiggy} 🪙</Text>
-                {"\n"}
-                ⏱️ Мечта «{currentGoal.name}» отдалится на ~{daysDelayed} дн.! Может, оставим?
+              <Text style={styles.consequenceTitle}>⚠️ Внимание! Изменение цели:</Text>
+              <View style={styles.consequenceRow}>
+                <Text style={styles.consequenceLabel}>В копилке:</Text>
+                <Text style={styles.consequenceVal}>
+                  Было {savedAmount} 🪙 → станет{" "}
+                  <Text style={{ fontWeight: "900", color: "#DC2626" }}>{remainingInPiggy} 🪙</Text>
+                </Text>
+              </View>
+              {daysBefore !== null && daysAfter !== null && (
+                <View style={styles.consequenceRow}>
+                  <Text style={styles.consequenceLabel}>Срок цели:</Text>
+                  <Text style={styles.consequenceVal}>
+                    Было ~{daysBefore} дн. → станет ~{daysAfter} дн.
+                    <Text style={{ color: "#B45309", fontWeight: "700" }}> (+{daysDelayed} дн.)</Text>
+                  </Text>
+                </View>
+              )}
+              <Text style={styles.consequenceQuestion}>
+                Точно достать {parsedWithdraw} монет из копилки?
               </Text>
             </View>
 
@@ -559,7 +576,7 @@ export default function Savings() {
                 style={{ flex: 1.2 }}
               />
               <DuoButton
-                title={`Достать ${parsedWithdraw} 🪙`}
+                title={`Да, достать ${parsedWithdraw} 🪙`}
                 variant="secondary"
                 size="md"
                 onPress={handleConfirmWithdraw}
@@ -1083,6 +1100,36 @@ const styles = StyleSheet.create({
     color: "#B45309",
     textAlign: "center",
     lineHeight: 18,
+  },
+  consequenceTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#B45309",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  consequenceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 2,
+  },
+  consequenceLabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: "700",
+  },
+  consequenceVal: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: "700",
+  },
+  consequenceQuestion: {
+    fontSize: 12,
+    fontWeight: "900",
+    color: "#92400E",
+    marginTop: 8,
+    textAlign: "center",
   },
   modalButtons: {
     flexDirection: "row",

@@ -400,7 +400,7 @@ export default function Adult() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.toggleLabel}>Демонстрационный режим</Text>
                 <Text style={styles.toggleDesc}>
-                  Убирает ожидание таймеров и открывает все задания сразу
+                  Открывает не менее 5 последовательных игровых периодов без ожидания реального времени и все уроки сразу
                 </Text>
               </View>
               <Pressable
