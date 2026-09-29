@@ -114,9 +114,11 @@ export default function Budget() {
                 />
               </View>
               <Text style={styles.compareHint}>
-                {actualMandatory >= period.plan.mandatory
-                  ? "✓ Питомец сыт и здоров, всё самое важное куплено!"
-                  : `Осталось потратить из конверта: ${period.plan.mandatory - actualMandatory} монет`}
+                {actualMandatory > period.plan.mandatory
+                  ? `⚠️ Перерасход: потрачено ${actualMandatory} из ${period.plan.mandatory} 🪙 (+${actualMandatory - period.plan.mandatory} 🪙 сверх плана)`
+                  : actualMandatory === period.plan.mandatory
+                  ? "✓ Конверт закрыт ровно по плану!"
+                  : `Осталось в конверте: ${period.plan.mandatory - actualMandatory} 🪙`}
               </Text>
             </View>
 
@@ -134,15 +136,17 @@ export default function Budget() {
                     styles.barFill,
                     {
                       width: `${Math.min(100, (actualOptional / (period.plan.optional || 1)) * 100)}%`,
-                      backgroundColor: "#8B5CF6",
+                      backgroundColor: actualOptional > period.plan.optional ? "#EF4444" : "#8B5CF6",
                     },
                   ]}
                 />
               </View>
               <Text style={styles.compareHint}>
                 {actualOptional > period.plan.optional
-                  ? "⚠️ Ого, на развлечения ушло чуть больше, чем планировали!"
-                  : `Ещё можно потратить на радости: ${period.plan.optional - actualOptional} монет`}
+                  ? `⚠️ Перерасход: потрачено ${actualOptional} из ${period.plan.optional} 🪙 (+${actualOptional - period.plan.optional} 🪙 сверх плана)`
+                  : actualOptional === 0
+                  ? "🌟 Отличная выдержка: ни одной лишней траты, монетки сохранены!"
+                  : `Ещё можно потратить на радости: ${period.plan.optional - actualOptional} 🪙`}
               </Text>
             </View>
 
@@ -168,7 +172,7 @@ export default function Budget() {
               <Text style={styles.compareHint}>
                 {actualSavings >= period.plan.savings
                   ? "✓ Ура! Мечта всё ближе — копилка полна по плану!"
-                  : `Осталось положить в копилку: ${period.plan.savings - actualSavings} монет`}
+                  : `Осталось положить в копилку: ${period.plan.savings - actualSavings} 🪙`}
               </Text>
             </View>
 
